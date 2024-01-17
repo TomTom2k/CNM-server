@@ -1,20 +1,30 @@
 const dynamoose = require('dynamoose');
+const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 const { Schema } = dynamoose;
 
-const User = new Schema({
+const UserSchema = new Schema({
 	UserID: {
 		type: String,
 		hashKey: true,
-		required: true,
+		default: () => uuidv4(),
 	},
 	FirstName: String,
 	LastName: String,
-	Password: String,
+	Password: {
+		type: String,
+		set: (value) => bcrypt.hashSync(value, 10),
+	},
 	Email: String,
-	PhoneNumber: String,
+	PhoneNumber: {
+		type: String,
+		index: {
+			name: 'PhoneNumberGlobalIndex',
+		},
+	},
 	AuthType: {
 		type: String,
-		enum: ['local', 'google'],
+		enum: ['phone', 'email', 'google'],
 		default: 'local',
 	},
 	Role: {
@@ -22,8 +32,20 @@ const User = new Schema({
 		enum: ['staff', 'client'],
 		default: 'client',
 	},
+	Active: {
+		type: Boolean,
+		default: false,
+	},
+	CreatedAt: {
+		type: Date,
+		default: () => new Date(),
+	},
+	UpdatedAt: {
+		type: Date,
+		default: () => new Date(),
+	},
 });
 
-const UserModel = dynamoose.model('User', User);
+const UserModel = dynamoose.model('User', UserSchema);
 
 module.exports = UserModel;
