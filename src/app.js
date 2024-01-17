@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dynamoose = require('dynamoose');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 // import from source
 const router = require('./routes');
@@ -9,7 +12,6 @@ const router = require('./routes');
 const app = express();
 
 // middleware
-// cấu hình cors
 app.use(
 	cors({
 		exposedHeaders: ['Authorization'],
@@ -29,6 +31,28 @@ const ddb = new dynamoose.aws.ddb.DynamoDB({
 
 dynamoose.aws.ddb.set(ddb);
 dynamoose.aws.ddb.local('http://localhost:8000');
+
+// swagger
+const options = {
+	definition: {
+		openapi: '3.1.0',
+		info: {
+			title: 'Zalo clone api',
+			version: '0.1.0',
+			description: 'API for zalo clone',
+		},
+		servers: [
+			{
+				url: process.env.URL,
+				description: 'Development server',
+			},
+		],
+	},
+	apis: [path.join(__dirname, './swagger/*.js')],
+};
+
+const specs = swaggerJsdoc(options);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // router
 app.use('/api', router);

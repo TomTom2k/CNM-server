@@ -9,7 +9,7 @@ const encodedToken = (phoneNumber) => {
 			iss: 'thanhtin',
 			sub: phoneNumber,
 			iat: new Date().getTime(),
-			exp: new Date().setDate(new Date().getDate() + 30),
+			exp: new Date().setDate(new Date().getDate() + 30), //token có giá trị 30 ngày
 		},
 		process.env.JWT_SECRET
 	);
