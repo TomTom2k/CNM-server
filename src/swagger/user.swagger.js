@@ -84,3 +84,64 @@
  *                 Role: "client"
  *                 Active: true
  */
+
+/**
+ * @swagger
+ * /api/user/contact:
+ *   get:
+ *     summary: Get all contacts for a user
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Successfully retrieved contacts.
+ *         content:
+ *           application/json:
+ *             example:
+ *               contacts:
+ *                 - ContactID: "abc123"
+ *                   UserID: "user123"
+ *                   ContactName: "Friend 1"
+ *                   PhoneNumber: "+1234567890"
+ *                 - ContactID: "def456"
+ *                   UserID: "user123"
+ *                   ContactName: "Friend 2"
+ *                   PhoneNumber: "+9876543210"
+ *       '404':
+ *         description: User not found.
+ *       '500':
+ *         description: Internal Server Error.
+ */
+
+/**
+ * @swagger
+ * /api/user/contact:
+ *   post:
+ *     summary: Add a new contact for a user
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               contactName:
+ *                 type: string
+ *                 description: The name of the new contact.
+ *               phoneNumber:
+ *                 type: string
+ *                 description: The phone number of the new contact.
+ *     responses:
+ *       '201':
+ *         description: Successfully added a new contact.
+ *       '400':
+ *         description: Bad Request, contact with the same phone number already exists.
+ *       '404':
+ *         description: User not found.
+ *       '500':
+ *         description: Internal Server Error.
+ */

@@ -23,7 +23,6 @@ passport.use(
 					.exec();
 
 				if (!user || user.count === 0) return done(null, false);
-
 				done(null, user[0]);
 			} catch (error) {
 				done(error, false);

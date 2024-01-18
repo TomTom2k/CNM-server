@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const JWT = require('jsonwebtoken');
 
 const User = require('../models/user.model');
+const Contact = require('../models/contact.model');
 
 const encodedToken = (phoneNumber) => {
 	return JWT.sign(
@@ -96,8 +97,70 @@ const signUpWithPhoneNumber = async (req, res, next) => {
 	}
 };
 
+// for contact
+const addContactForUser = async (req, res, next) => {
+	try {
+		const userId = req.user.UserID;
+		const { contactName, phoneNumber } = req.body;
+
+		// Kiểm tra liên hệ này có trong danh bạ hay chưa
+		const existingContacts = await Contact.query('UserID')
+			.eq(userId)
+			.where('PhoneNumber')
+			.eq(phoneNumber)
+			.exec();
+
+		if (existingContacts && existingContacts.length > 0) {
+			return res
+				.status(400)
+				.json({ error: 'Liên lạc đã tồn tại trong danh bạ.' });
+		}
+
+		// Kiểm tra xem có người dùng nào có phoneNumber đó hay không
+		const userWithPhoneNumber = await User.query('PhoneNumber')
+			.eq(phoneNumber)
+			.exec();
+
+		if (!userWithPhoneNumber || userWithPhoneNumber.length === 0) {
+			return res.status(404).json({
+				error: 'Nguời dùng không tồn tại',
+			});
+		}
+
+		// Tạo liên hệ mới
+		const newContact = new Contact({
+			UserID: userId,
+			ContactName: contactName,
+			PhoneNumber: phoneNumber,
+		});
+		await newContact.save();
+
+		return res.status(201).json({
+			message: 'Liên lạc đã được thêm vào danh bạ.',
+			contact: newContact,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+const getAllContactOfUser = async (req, res, next) => {
+	try {
+		const userId = req.user.UserID;
+		const contacts = await Contact.query('UserID').eq(userId).exec();
+		return res.status(200).json({
+			message: 'Lấy thành công danh sách liên hệ của người dùng',
+			contacts,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	secret,
 	signUpWithPhoneNumber,
 	signInWithPhoneNumber,
+	addContactForUser,
+	getAllContactOfUser,
 };
