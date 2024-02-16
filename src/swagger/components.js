@@ -10,44 +10,48 @@
  *     User:
  *       type: object
  *       properties:
- *         UserID:
+ *         userID:
  *           type: string
  *           description: The unique identifier for the user.
- *         FirstName:
+ *         fullName:
  *           type: string
- *           description: The first name of the user.
- *         LastName:
- *           type: string
- *           description: The last name of the user.
- *         Password:
+ *           description: The full name of the user.
+ *         password:
  *           type: string
  *           description: The hashed password of the user.
- *         Email:
+ *         gender:
  *           type: string
- *           description: The email address of the user.
- *         PhoneNumber:
+ *           enum:
+ *             - male
+ *             - female
+ *           description: The gender of the user.
+ *         phoneNumber:
  *           type: string
  *           description: The phone number of the user.
- *         AuthType:
- *           type: string
- *           enum: ['phone', 'email', 'google']
- *           default: 'local'
- *           description: The authentication type of the user.
- *         Role:
- *           type: string
- *           enum: ['staff', 'client']
- *           default: 'client'
- *           description: The role of the user.
- *         Active:
+ *         active:
  *           type: boolean
- *           default: false
  *           description: Indicates whether the user is active.
- *         CreatedAt:
+ *         createdAt:
  *           type: string
  *           format: date-time
  *           description: The timestamp when the user was created.
- *         UpdatedAt:
+ *         updatedAt:
  *           type: string
  *           format: date-time
  *           description: The timestamp when the user was last updated.
+ *     Contact:
+ *       type: object
+ *       properties:
+ *         contactID:
+ *           type: string
+ *           description: The unique identifier for the contact.
+ *         userID:
+ *           type: string
+ *           description: The ID of the user who owns the contact.
+ *         contactName:
+ *           type: string
+ *           description: The name of the contact.
+ *         phoneNumber:
+ *           type: string
+ *           description: The phone number of the contact.
  */

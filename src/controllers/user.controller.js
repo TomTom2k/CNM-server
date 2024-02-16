@@ -18,24 +18,13 @@ const encodedToken = (phoneNumber) => {
 
 const secret = async (req, res, next) => {
 	try {
-		const {
-			UserID,
-			FirstName,
-			LastName,
-			PhoneNumber,
-			AuthType,
-			Role,
-			Active,
-		} = req.user;
+		const { userID, fullName, phoneNumber, active } = req.user;
 
 		const user = {
-			UserID,
-			FirstName,
-			LastName,
-			PhoneNumber,
-			AuthType,
-			Role,
-			Active,
+			userID,
+			fullName,
+			phoneNumber,
+			active,
 		};
 
 		return res.status(200).json({
@@ -49,7 +38,7 @@ const secret = async (req, res, next) => {
 
 const signInWithPhoneNumber = async (req, res, next) => {
 	try {
-		const token = encodedToken(req.user.PhoneNumber);
+		const token = encodedToken(req.user.phoneNumber);
 		res.setHeader('Authorization', token);
 
 		res.status(200).json({
@@ -63,10 +52,10 @@ const signInWithPhoneNumber = async (req, res, next) => {
 
 const signUpWithPhoneNumber = async (req, res, next) => {
 	try {
-		const { phoneNumber, password, firstName, lastName } = req.body;
+		const { phoneNumber, password, fullName } = req.body;
 
 		// Check if the phone number is already in use
-		const existingUser = await User.query('PhoneNumber')
+		const existingUser = await User.query('phoneNumber')
 			.eq(phoneNumber)
 			.exec();
 
@@ -78,12 +67,10 @@ const signUpWithPhoneNumber = async (req, res, next) => {
 
 		// Create a new user without sending an OTP
 		const newUser = new User({
-			PhoneNumber: phoneNumber,
-			Password: password,
-			FirstName: firstName,
-			LastName: lastName,
-			AuthType: 'phone',
-			Active: true,
+			phoneNumber: phoneNumber,
+			password: password,
+			fullName: fullName,
+			active: true,
 		});
 
 		await newUser.save();
@@ -100,13 +87,13 @@ const signUpWithPhoneNumber = async (req, res, next) => {
 // for contact
 const addContactForUser = async (req, res, next) => {
 	try {
-		const userId = req.user.UserID;
+		const userId = req.user.userID;
 		const { contactName, phoneNumber } = req.body;
 
 		// Kiểm tra liên hệ này có trong danh bạ hay chưa
-		const existingContacts = await Contact.query('UserID')
+		const existingContacts = await Contact.query('userID')
 			.eq(userId)
-			.where('PhoneNumber')
+			.where('phoneNumber')
 			.eq(phoneNumber)
 			.exec();
 
@@ -117,7 +104,7 @@ const addContactForUser = async (req, res, next) => {
 		}
 
 		// Kiểm tra xem có người dùng nào có phoneNumber đó hay không
-		const userWithPhoneNumber = await User.query('PhoneNumber')
+		const userWithPhoneNumber = await User.query('phoneNumber')
 			.eq(phoneNumber)
 			.exec();
 
@@ -129,9 +116,9 @@ const addContactForUser = async (req, res, next) => {
 
 		// Tạo liên hệ mới
 		const newContact = new Contact({
-			UserID: userId,
-			ContactName: contactName,
-			PhoneNumber: phoneNumber,
+			userID: userId,
+			contactName: contactName,
+			phoneNumber: phoneNumber,
 		});
 		await newContact.save();
 
@@ -146,8 +133,8 @@ const addContactForUser = async (req, res, next) => {
 
 const getAllContactOfUser = async (req, res, next) => {
 	try {
-		const userId = req.user.UserID;
-		const contacts = await Contact.query('UserID').eq(userId).exec();
+		const userId = req.user.userID;
+		const contacts = await Contact.query('userID').eq(userId).exec();
 		return res.status(200).json({
 			message: 'Lấy thành công danh sách liên hệ của người dùng',
 			contacts,

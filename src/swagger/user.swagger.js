@@ -45,12 +45,9 @@
  *               password:
  *                 type: string
  *                 description: The password for the new user.
- *               firstName:
+ *               fullName:
  *                 type: string
- *                 description: The first name of the new user.
- *               lastName:
- *                 type: string
- *                 description: The last name of the new user.
+ *                 description: The full name of the new user.
  *     responses:
  *       '200':
  *         description: Successfully signed up.
@@ -76,13 +73,12 @@
  *             example:
  *               message: 'User fetched successfully!'
  *               user:
- *                 UserID: "123456"
- *                 FirstName: "John"
- *                 LastName: "Doe"
- *                 PhoneNumber: "+1234567890"
- *                 AuthType: "local"
- *                 Role: "client"
- *                 Active: true
+ *                 userID: "123456"
+ *                 fullName: "Doe John"
+ *                 gender: "male"
+ *                 phoneNumber: "+84387166789"
+ *                 active: true
+ *                 profilePic: ""
  */
 
 /**
@@ -100,14 +96,14 @@
  *           application/json:
  *             example:
  *               contacts:
- *                 - ContactID: "abc123"
- *                   UserID: "user123"
- *                   ContactName: "Friend 1"
- *                   PhoneNumber: "+1234567890"
- *                 - ContactID: "def456"
- *                   UserID: "user123"
- *                   ContactName: "Friend 2"
- *                   PhoneNumber: "+9876543210"
+ *                 - contactID: "abc123"
+ *                   userID: "user123"
+ *                   contactName: "Friend 1"
+ *                   phoneNumber: "+1234567890"
+ *                 - contactID: "def456"
+ *                   userID: "user123"
+ *                   contactName: "Friend 2"
+ *                   phoneNumber: "+9876543210"
  *       '404':
  *         description: User not found.
  *       '500':

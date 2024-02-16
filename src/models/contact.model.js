@@ -4,12 +4,12 @@ const { v4: uuidv4 } = require('uuid');
 const { Schema } = dynamoose;
 
 const ContactSchema = new Schema({
-	ContactID: {
+	contactID: {
 		type: String,
 		hashKey: true,
 		default: () => uuidv4(),
 	},
-	UserID: {
+	userID: {
 		type: String,
 		index: {
 			global: true,
@@ -18,11 +18,11 @@ const ContactSchema = new Schema({
 		},
 		required: true,
 	},
-	ContactName: {
+	contactName: {
 		type: String,
 		required: true,
 	},
-	PhoneNumber: {
+	phoneNumber: {
 		type: String,
 		index: true,
 		required: true,
