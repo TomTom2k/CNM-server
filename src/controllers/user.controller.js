@@ -18,12 +18,13 @@ const encodedToken = (phoneNumber) => {
 
 const secret = async (req, res, next) => {
 	try {
-		const { userID, fullName, phoneNumber, active } = req.user;
+		const { userID, fullName, phoneNumber, gender, active } = req.user;
 
 		const user = {
 			userID,
 			fullName,
 			phoneNumber,
+			gender,
 			active,
 		};
 
@@ -52,7 +53,7 @@ const signInWithPhoneNumber = async (req, res, next) => {
 
 const signUpWithPhoneNumber = async (req, res, next) => {
 	try {
-		const { phoneNumber, password, fullName } = req.body;
+		const { phoneNumber, password, gender, fullName } = req.body;
 
 		// Check if the phone number is already in use
 		const existingUser = await User.query('phoneNumber')
@@ -70,6 +71,7 @@ const signUpWithPhoneNumber = async (req, res, next) => {
 			phoneNumber: phoneNumber,
 			password: password,
 			fullName: fullName,
+			gender: gender,
 			active: true,
 		});
 

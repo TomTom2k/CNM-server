@@ -18,7 +18,7 @@ passport.use(
 			try {
 				const phoneNumber = payload.sub;
 
-				const user = await User.query('PhoneNumber')
+				const user = await User.query('phoneNumber')
 					.eq(phoneNumber)
 					.exec();
 
@@ -39,13 +39,13 @@ passport.use(
 		},
 		async (phoneNumber, password, done) => {
 			try {
-				const user = await User.query('PhoneNumber')
+				const user = await User.query('phoneNumber')
 					.eq(phoneNumber)
 					.exec();
 
 				if (!user || user.count === 0) return done(null, false);
 
-				const hashedPassword = user[0].Password;
+				const hashedPassword = user[0].password;
 
 				const isCorrectPassword = await bcrypt.compare(
 					password,

@@ -13,7 +13,7 @@ const ContactSchema = new Schema({
 		type: String,
 		index: {
 			global: true,
-			rangeKey: 'ContactID',
+			rangeKey: 'contactID',
 			project: true,
 		},
 		required: true,

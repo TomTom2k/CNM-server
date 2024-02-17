@@ -48,6 +48,9 @@
  *               fullName:
  *                 type: string
  *                 description: The full name of the new user.
+ *               gender:
+ *                 type: string
+ *                 description: The gender of the new user
  *     responses:
  *       '200':
  *         description: Successfully signed up.

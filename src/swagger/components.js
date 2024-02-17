@@ -39,6 +39,9 @@
  *           type: string
  *           format: date-time
  *           description: The timestamp when the user was last updated.
+ *         profilePic:
+ *           type: string
+ *           description: The profile picture of the user
  *     Contact:
  *       type: object
  *       properties:
