@@ -9,6 +9,7 @@ const ConversationSchema = new dynamoose.Schema(
 			hashKey: true,
 			default: () => uuidv4(),
 		},
+		name: String,
 		participantIds: {
 			type: Array,
 			schema: [String],

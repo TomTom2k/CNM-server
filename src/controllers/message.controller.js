@@ -29,7 +29,6 @@ const sendMessage = async (req, res, next) => {
 			});
 			conversation = await conversation.save();
 		}
-		console.log(conversation.participantIds);
 
 		// Tạo một tin nhắn mới
 		const message = new MessageModel({
@@ -38,10 +37,14 @@ const sendMessage = async (req, res, next) => {
 			content: content,
 		});
 		await message.save();
+
+		// Cập nhật lastMessage của cuộc trò chuyện
+		conversation.lastMessage = content;
+		await conversation.save();
+
 		return res.status(200).json({
 			message: 'Gửi tin nhắn thành công',
 			message,
-			conversation,
 		});
 	} catch (error) {
 		next(error);
@@ -50,12 +53,17 @@ const sendMessage = async (req, res, next) => {
 
 const getMessages = async (req, res, next) => {
 	try {
-		const { conversationId } = req.body;
+		const { conversationId } = req.params;
 
 		const messages = await MessageModel.query('conversationId')
 			.eq(conversationId)
+			.sort('createdAt')
 			.exec();
 		const messageArray = messages.map((message) => message.toJSON());
+		// Sắp xếp mảng tin nhắn theo createdAt
+		messageArray.sort(
+			(a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+		);
 
 		res.status(200).json({ messages: messageArray });
 	} catch (error) {

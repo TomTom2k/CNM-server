@@ -8,6 +8,10 @@ const {
 } = require('../controllers/message.controller');
 
 router.post('/', passport.authenticate('jwt', { session: false }), sendMessage);
-router.get('/', passport.authenticate('jwt', { session: false }), getMessages);
+router.get(
+	'/:conversationId',
+	passport.authenticate('jwt', { session: false }),
+	getMessages
+);
 
 module.exports = router;
