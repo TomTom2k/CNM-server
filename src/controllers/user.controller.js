@@ -46,7 +46,6 @@ const signInWithPhoneNumber = async (req, res, next) => {
 			message: 'Đăng nhập thành công!',
 		});
 	} catch (error) {
-		console.error('Error during sign-in:', error);
 		next(error);
 	}
 };

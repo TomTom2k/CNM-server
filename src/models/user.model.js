@@ -8,7 +8,7 @@ const UserSchema = new Schema(
 		userID: {
 			type: String,
 			hashKey: true,
-			default: () => uuidv4(),
+			default: uuidv4,
 		},
 		fullName: String,
 		password: {
@@ -35,7 +35,7 @@ const UserSchema = new Schema(
 		},
 	},
 	{
-		timestamps: 'true',
+		timestamps: true,
 	}
 );
 
