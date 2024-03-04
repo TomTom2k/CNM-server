@@ -3,23 +3,11 @@ const passport = require('passport');
 require('../middleware/passport');
 
 const {
-	signUpWithPhoneNumber,
-	signInWithPhoneNumber,
-	secret,
 	addContactForUser,
 	getAllContactOfUser,
+	findUserByPhoneNumber,
 } = require('../controllers/user.controller');
 
-// API auth
-router.get('/secret', passport.authenticate('jwt', { session: false }), secret);
-router.post('/sign-up-with-phone', signUpWithPhoneNumber);
-router.post(
-	'/sign-in-with-phone',
-	passport.authenticate('local', { session: false }),
-	signInWithPhoneNumber
-);
-
-// API for user
 router.post(
 	'/contact',
 	passport.authenticate('jwt', { session: false }),
@@ -29,6 +17,11 @@ router.get(
 	'/contact',
 	passport.authenticate('jwt', { session: false }),
 	getAllContactOfUser
+);
+router.get(
+	'/find-user',
+	passport.authenticate('jwt', { session: false }),
+	findUserByPhoneNumber
 );
 
 module.exports = router;

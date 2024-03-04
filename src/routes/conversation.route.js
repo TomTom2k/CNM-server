@@ -3,13 +3,19 @@ const passport = require('passport');
 require('../middleware/passport');
 
 const {
-	getListConversations,
+	getConversations,
+	createConversation,
 } = require('../controllers/conversation.controller');
 
 router.get(
 	'/',
 	passport.authenticate('jwt', { session: false }),
-	getListConversations
+	getConversations
+);
+router.post(
+	'/',
+	passport.authenticate('jwt', { session: false }),
+	createConversation
 );
 
 module.exports = router;
