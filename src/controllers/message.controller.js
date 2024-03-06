@@ -1,5 +1,6 @@
 const MessageModel = require('../models/message.model');
 const ConversationModel = require('../models/conversation.model');
+const { io, getReceiverSocketId } = require('../socket/socket');
 
 const sendMessage = async (req, res, next) => {
 	try {
@@ -20,11 +21,20 @@ const sendMessage = async (req, res, next) => {
 			conversationId: conversation.conversationId,
 			content: content,
 		});
-		await message.save();
-
-		// Cập nhật lastMessage của cuộc trò chuyện
 		conversation.lastMessage = content;
-		await conversation.save();
+
+		// await message.save();
+		// await conversation.save();
+		await Promise.all([message.save(), conversation.save()]);
+
+		conversation.participantIds.forEach((participantId) => {
+			if (participantId !== senderId) {
+				const receiverSocketId = getReceiverSocketId(participantId);
+				if (receiverSocketId) {
+					io.to(receiverSocketId).emit('newMessage', message);
+				}
+			}
+		});
 
 		return res.status(200).json({
 			message: 'Gửi tin nhắn thành công',

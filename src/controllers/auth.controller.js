@@ -17,7 +17,7 @@ const encodedToken = (phoneNumber) => {
 const secret = async (req, res, next) => {
 	try {
 		const { userID, fullName, phoneNumber, gender, active } = req.user;
-
+		// console.log();
 		const user = {
 			userID,
 			fullName,
