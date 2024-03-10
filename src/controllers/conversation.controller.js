@@ -18,14 +18,24 @@ const getConversations = async (req, res, next) => {
 			return acc;
 		}, []);
 
-		const members = await User.batchGet(memberIds, {
+		// Sử dụng Set để loại bỏ các phần tử trùng lặp
+		const uniqueMemberIds = [...new Set(memberIds)];
+
+		// Lấy thông tin của tất cả các thành viên một lần bằng cách sử dụng batchGet
+		const members = await User.batchGet(uniqueMemberIds, {
 			attributes: ['userID', 'fullName', 'profilePic'],
+		});
+
+		// Tạo một đối tượng để lưu trữ thông tin của người dùng
+		const membersMap = {};
+		members.forEach((member) => {
+			membersMap[member.userID] = member;
 		});
 
 		// Kết hợp thông tin của thành viên vào mỗi cuộc trò chuyện
 		const conversationsWithMembers = conversations.map((conversation) => {
-			const membersInfo = conversation.participantIds.map((memberId) =>
-				members.find((member) => member.userID === memberId)
+			const membersInfo = conversation.participantIds.map(
+				(memberId) => membersMap[memberId]
 			);
 			return { ...conversation, membersInfo };
 		});
@@ -35,6 +45,7 @@ const getConversations = async (req, res, next) => {
 		next(error);
 	}
 };
+
 const createConversation = async (req, res, next) => {
 	try {
 		const { name, participantIds } = req.body;
@@ -57,10 +68,10 @@ const createConversation = async (req, res, next) => {
 			}
 		);
 
-		if (existingConversation.length > 0) {
+		if (matchingConversations.length > 0) {
 			return res.status(200).json({
 				message: 'Cuộc trò chuyện đã tồn tại',
-				conversation: existingConversation[0],
+				conversation: matchingConversations[0],
 			});
 		}
 

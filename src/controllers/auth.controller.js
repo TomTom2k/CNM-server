@@ -16,14 +16,13 @@ const encodedToken = (phoneNumber) => {
 
 const secret = async (req, res, next) => {
 	try {
-		const { userID, fullName, phoneNumber, gender, active } = req.user;
-		// console.log();
+		const { userID, fullName, phoneNumber, gender, profilePic } = req.user;
 		const user = {
 			userID,
 			fullName,
 			phoneNumber,
 			gender,
-			active,
+			profilePic,
 		};
 
 		return res.status(200).json({
