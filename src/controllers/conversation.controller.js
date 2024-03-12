@@ -33,7 +33,7 @@ const getConversations = async (req, res, next) => {
 		});
 
 		// Kết hợp thông tin của thành viên vào mỗi cuộc trò chuyện
-		const conversationsWithMembers = conversations.map((conversation) => {
+		const conversationsWithMembers = conversationsOfSender.map((conversation) => {
 			const membersInfo = conversation.participantIds.map(
 				(memberId) => membersMap[memberId]
 			);
