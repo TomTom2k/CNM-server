@@ -30,7 +30,7 @@ const startServer = (port) => {
 	});
 
 	dynamoose.aws.ddb.set(ddb);
-	dynamoose.aws.ddb.local('http://localhost:8000');
+	// dynamoose.aws.ddb.local('http://localhost:8000');
 
 	// swagger
 	const options = {
