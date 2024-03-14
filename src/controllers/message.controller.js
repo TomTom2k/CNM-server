@@ -2,7 +2,7 @@ const { sendMessageService, getMessagesService } = require("../services/message.
 
 const sendMessage = async (req, res, next) => {
 	try {
-		const data = await sendMessageService(req.user.userID, req.body, req.file)
+		const data = await sendMessageService(req.user.userID, req.body, req.files)
 
 		return res.status(data.status).json({
 			message: data.message,

@@ -6,7 +6,7 @@ const { io, getReceiverSocketId } = require('../socket/socket');
 
 const s3 = new AWS.S3();
 
-const sendMessageService = async (senderId, data, file) => {
+const sendMessageService = async (senderId, data, files) => {
     const { conversationId, content, type } = data;
     let imageURL = "";
 
@@ -20,29 +20,30 @@ const sendMessageService = async (senderId, data, file) => {
         };
     }
 
-    if(type === "image") {
-        // Lưu image vào S3 và lấy ra image url
-        const image = file?.originalname.split(".");
-        const fileType = image[image.length - 1];
-        const filePath = `img_${Date.now().toString()}.${fileType}`;
-
-        const paramsS3 = {
-            Bucket: process.env.S3_BUCKET_NAME,
-            Key: filePath,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-        };
-
-        const data = await s3.upload(paramsS3).promise();
-        imageURL = data.Location
+    if (type === "image") {
+        for(const file of files) {
+            // Lưu từng image vào S3 và lấy ra image url
+            const image = file?.originalname.split(".");
+            const fileType = image[image.length - 1];
+            const filePath = `img_${Date.now().toString()}.${fileType}`;
+    
+            const paramsS3 = {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: filePath,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+            };
+    
+            const data = await s3.upload(paramsS3).promise();
+            imageURL += data.Location + " "
+        }
     }
-
 
     // Tạo một tin nhắn mới
     const message = new MessageModel({
         senderId: senderId,
         conversationId: conversation.conversationId,
-        content: content || imageURL,
+        content: content || imageURL.trim(),
         type
     });
     if(type === "text"){
