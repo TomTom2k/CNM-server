@@ -1,9 +1,14 @@
+require("dotenv").config()
+const AWS = require("../configs/aws.config")
 const ConversationModel = require('../models/conversation.model');
 const MessageModel = require('../models/message.model');
 const { io, getReceiverSocketId } = require('../socket/socket');
 
-const sendMessageService = async (senderId, data) => {
-    const { conversationId, content } = data;
+const s3 = new AWS.S3();
+
+const sendMessageService = async (senderId, data, file) => {
+    const { conversationId, content, type } = data;
+    let imageURL = "";
 
     // Lấy thông tin cuộc trò chuyện
     let conversation = await ConversationModel.get(conversationId);
@@ -15,13 +20,36 @@ const sendMessageService = async (senderId, data) => {
         };
     }
 
+    if(type === "image") {
+        // Lưu image vào S3 và lấy ra image url
+        const image = file?.originalname.split(".");
+        const fileType = image[image.length - 1];
+        const filePath = `img_${Date.now().toString()}.${fileType}`;
+
+        const paramsS3 = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: filePath,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+        };
+
+        const data = await s3.upload(paramsS3).promise();
+        imageURL = data.Location
+    }
+
+
     // Tạo một tin nhắn mới
     const message = new MessageModel({
         senderId: senderId,
         conversationId: conversation.conversationId,
-        content: content,
+        content: content || imageURL,
+        type
     });
-    conversation.lastMessage = content;
+    if(type === "text"){
+        conversation.lastMessage = content
+    } else if(type === "image"){
+        conversation.lastMessage = "Hình ảnh"
+    }
 
     // await message.save();
     // await conversation.save();
@@ -39,7 +67,7 @@ const sendMessageService = async (senderId, data) => {
     return {
         message: 'Gửi tin nhắn thành công',
         status: 200,
-        data: message,
+        data: message
     };
 }
 

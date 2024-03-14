@@ -1,14 +1,12 @@
-const MessageModel = require('../models/message.model');
-
 const { sendMessageService, getMessagesService } = require("../services/message.service")
 
 const sendMessage = async (req, res, next) => {
 	try {
-		const data = await sendMessageService(req.user.userID, req.body)
-		console.log("message >>>>> " , data.data)
+		const data = await sendMessageService(req.user.userID, req.body, req.file)
+
 		return res.status(data.status).json({
 			message: data.message,
-			message: data.data,
+			message: data.data
 		});
 	} catch (error) {
 		next(error);
