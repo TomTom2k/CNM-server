@@ -15,6 +15,7 @@ const MessageSchema = new Schema(
 		},
 		senderId: String,
 		content: String,
+		type: String
 	},
 	{
 		timestamps: true,

@@ -1,18 +1,4 @@
-const JWT = require('jsonwebtoken');
-
-const UserModel = require('../models/user.model');
-
-const encodedToken = (phoneNumber) => {
-	return JWT.sign(
-		{
-			iss: 'thanhtin',
-			sub: phoneNumber,
-			iat: new Date().getTime(),
-			exp: new Date().setDate(new Date().getDate() + 30), //token có giá trị 30 ngày
-		},
-		process.env.JWT_SECRET
-	);
-};
+const { encodedToken, createNewUser } = require("../services/auth.service")
 
 const secret = async (req, res, next) => {
 	try {
@@ -49,32 +35,10 @@ const signInWithPhoneNumber = async (req, res, next) => {
 
 const signUpWithPhoneNumber = async (req, res, next) => {
 	try {
-		const { phoneNumber, password, gender, fullName } = req.body;
+		const data = await createNewUser(req.body)
 
-		// Check if the phone number is already in use
-		const existingUser = await UserModel.query('phoneNumber')
-			.eq(phoneNumber)
-			.exec();
-
-		if (existingUser && existingUser.count > 0) {
-			return res
-				.status(400)
-				.json({ message: 'Số điện thoại đã được sử dụng.' });
-		}
-
-		// Create a new user without sending an OTP
-		const newUser = new UserModel({
-			phoneNumber: phoneNumber,
-			password: password,
-			fullName: fullName,
-			gender: gender,
-			active: true,
-		});
-
-		await newUser.save();
-
-		res.status(200).json({
-			message: 'Đăng ký thành công!',
+		res.status(data.status).json({
+			message: data.message,
 		});
 	} catch (error) {
 		console.error('Error during phone sign up:', error);
