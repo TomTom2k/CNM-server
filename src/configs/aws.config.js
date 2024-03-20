@@ -6,4 +6,6 @@ AWS.config.update({
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
 });
 
-module.exports = AWS
+const s3 = new AWS.S3()
+
+module.exports = { s3 }

@@ -1,14 +1,13 @@
 require("dotenv").config()
-const AWS = require("../configs/aws.config")
+const { s3 } = require("../configs/aws.config")
 const ConversationModel = require('../models/conversation.model');
 const MessageModel = require('../models/message.model');
 const { io, getReceiverSocketId } = require('../socket/socket');
 
-const s3 = new AWS.S3();
 
 const sendMessageService = async (senderId, data, files) => {
     const { conversationId, content, type } = data;
-    let imageURL = "";
+    let fileURL = "";
 
     // Lấy thông tin cuộc trò chuyện
     let conversation = await ConversationModel.get(conversationId);
@@ -20,12 +19,10 @@ const sendMessageService = async (senderId, data, files) => {
         };
     }
 
-    if (type === "image") {
+    if (type === "image" || type === "file") {
         for(const file of files) {
-            // Lưu từng image vào S3 và lấy ra image url
-            const image = file?.originalname.split(".");
-            const fileType = image[image.length - 1];
-            const filePath = `img_${Date.now().toString()}.${fileType}`;
+            // Lưu từng file vào S3 và lấy ra file url
+            const filePath = `${Date.now().toString()}.${file.size}.${file?.originalname}`;
     
             const paramsS3 = {
                 Bucket: process.env.S3_BUCKET_NAME,
@@ -35,7 +32,7 @@ const sendMessageService = async (senderId, data, files) => {
             };
     
             const data = await s3.upload(paramsS3).promise();
-            imageURL += data.Location + " "
+            fileURL += data.Location + " "
         }
     }
 
@@ -43,13 +40,15 @@ const sendMessageService = async (senderId, data, files) => {
     const message = new MessageModel({
         senderId: senderId,
         conversationId: conversation.conversationId,
-        content: content || imageURL.trim(),
+        content: content || fileURL.trim(),
         type
     });
     if(type === "text"){
         conversation.lastMessage = content
     } else if(type === "image"){
-        conversation.lastMessage = "Hình ảnh"
+        conversation.lastMessage = "🖼️ Hình ảnh"
+    } else if(type === "file"){
+        conversation.lastMessage = "🔗 " + files[files.length - 1].originalname
     }
 
     // await message.save();
