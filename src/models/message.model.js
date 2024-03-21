@@ -1,4 +1,5 @@
 const dynamoose = require('dynamoose');
+const { boolean } = require('joi');
 const { v4: uuidv4 } = require('uuid');
 const { Schema } = dynamoose;
 
@@ -15,7 +16,11 @@ const MessageSchema = new Schema(
 		},
 		senderId: String,
 		content: String,
-		type: String
+		type: String,
+		selfDelete:{
+			type: Boolean,
+			default: false,
+		},
 	},
 	{
 		timestamps: true,

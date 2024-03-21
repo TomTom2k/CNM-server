@@ -13,27 +13,27 @@ const sendMessageService = async (senderId, data, files) => {
     // Lấy thông tin cuộc trò chuyện
     let conversation = await ConversationModel.get(conversationId);
     if (!conversation) {
-        return { 
-            message: 'Cuộc hội thoại không tồn tại', 
-            status: 400, 
-            data: {} 
+        return {
+            message: 'Cuộc hội thoại không tồn tại',
+            status: 400,
+            data: {}
         };
     }
 
     if (type === "image") {
-        for(const file of files) {
+        for (const file of files) {
             // Lưu từng image vào S3 và lấy ra image url
             const image = file?.originalname.split(".");
             const fileType = image[image.length - 1];
             const filePath = `img_${Date.now().toString()}.${fileType}`;
-    
+
             const paramsS3 = {
                 Bucket: process.env.S3_BUCKET_NAME,
                 Key: filePath,
                 Body: file.buffer,
                 ContentType: file.mimetype,
             };
-    
+
             const data = await s3.upload(paramsS3).promise();
             imageURL += data.Location + " "
         }
@@ -46,9 +46,9 @@ const sendMessageService = async (senderId, data, files) => {
         content: content || imageURL.trim(),
         type
     });
-    if(type === "text"){
+    if (type === "text") {
         conversation.lastMessage = content
-    } else if(type === "image"){
+    } else if (type === "image") {
         conversation.lastMessage = "Hình ảnh"
     }
 
@@ -86,13 +86,107 @@ const getMessagesService = async (data) => {
         (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
-    return { 
-        data: messageArray, 
-        status: 200 
+    return {
+        data: messageArray,
+        status: 200
     };
 }
 
+// const deleteMessageService = async (data) => {
+//     const { messageId } = data;
+
+//     try {
+//         // Tìm và xóa tin nhắn từ cơ sở dữ liệu
+//         const deletedMessage = await MessageModel.delete(messageId);
+
+//         // Nếu tin nhắn được xóa thành công
+//         if (deletedMessage) {
+//             return {
+//                 message: 'Xóa tin nhắn thành công',
+//                 status: 200,
+//                 data: deletedMessage
+//             };
+//         } else {
+//             return {
+//                 message: 'Tin nhắn không tồn tại hoặc không thể xóa',
+//                 status: 404,
+//                 data: {}
+//             };
+//         }
+//     } catch (error) {
+//         console.log(error);
+//         return {
+//             message: 'Đã xảy ra lỗi khi xóa tin nhắn',
+//             status: 500,
+//             data: {}
+//         };
+//     }
+
+// }
+const deleteMessageService = async (data) => {
+    const { messageId } = data;
+    console.log('deleteMessageService is called')
+    console.log(data)
+    try {
+        // Find the message in the database
+        const message = await MessageModel.get({ messageId });
+
+        // If message doesn't exist
+        if (!message) {
+            return {
+                message: 'Tin nhắn không tồn tại hoặc không thể xóa',
+                status: 404,
+                data: {}
+            };
+        }
+
+        // Set selfDelete to true
+        message.selfDelete = true;
+
+        // Save the updated message
+        await message.save();
+
+        return {
+            message: 'Xóa tin nhắn thành công',
+            status: 200,
+            data: message
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            message: 'Đã xảy ra lỗi khi xóa tin nhắn',
+            status: 500,
+            data: {}
+        };
+    }
+};
+const updateMessageToRevokeMessage = async (data) => {
+    console.log('updateMessageToRevokeMessage is called')
+    const { messageId } = data;
+    console.log(data)
+    try {
+        const message = await MessageModel.get(messageId);
+        message.content = "Tin nhắn này đã được thu hồi";
+        await message.save();
+        return {
+            message: 'Thu hồi tin nhắn thành công',
+            status: 200,
+            data: message
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            message: 'Đã xảy ra lỗi khi thu hồi tin nhắn',
+            status: 500,
+            data: {}
+        };
+    }
+}
+
+
 module.exports = {
     sendMessageService,
-    getMessagesService
+    getMessagesService,
+    deleteMessageService,
+    updateMessageToRevokeMessage,
 }
