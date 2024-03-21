@@ -8,6 +8,7 @@ const { io, getReceiverSocketId } = require('../socket/socket');
 const sendMessageService = async (senderId, data, files) => {
     const { conversationId, content, type } = data;
     let fileURL = "";
+    let messages = []
 
     // Lấy thông tin cuộc trò chuyện
     let conversation = await ConversationModel.get(conversationId);
@@ -32,17 +33,29 @@ const sendMessageService = async (senderId, data, files) => {
             };
     
             const data = await s3.upload(paramsS3).promise();
-            fileURL += data.Location + " "
+            if(type === "file"){
+                messages.push({
+                    senderId: senderId,
+                    conversationId: conversation.conversationId,
+                    content: data.Location,
+                    type
+                })
+            } else {
+                fileURL += data.Location + " "
+            }
         }
     }
 
-    // Tạo một tin nhắn mới
-    const message = new MessageModel({
-        senderId: senderId,
-        conversationId: conversation.conversationId,
-        content: content || fileURL.trim(),
-        type
-    });
+    if(type !== "file"){
+        // Tạo một tin nhắn mới
+        messages.push({
+            senderId: senderId,
+            conversationId: conversation.conversationId,
+            content: content || fileURL.trim(),
+            type
+        })
+    }
+
     if(type === "text"){
         conversation.lastMessage = content
     } else if(type === "image"){
@@ -51,23 +64,26 @@ const sendMessageService = async (senderId, data, files) => {
         conversation.lastMessage = "🔗 " + files[files.length - 1].originalname
     }
 
-    // await message.save();
     // await conversation.save();
-    await Promise.all([message.save(), conversation.save()]);
+    await Promise.all([conversation.save()]);
+    for(const message of messages) {
+        // await message.save();
+        await Promise.all([new MessageModel(message).save()]);
 
-    conversation.participantIds.forEach((participantId) => {
-        if (participantId !== senderId) {
-            const receiverSocketId = getReceiverSocketId(participantId);
-            if (receiverSocketId) {
-                io.to(receiverSocketId).emit('newMessage', message);
+        conversation.participantIds.forEach((participantId) => {
+            if (participantId !== senderId) {
+                const receiverSocketId = getReceiverSocketId(participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('newMessage', message);
+                }
             }
-        }
-    });
+        });
+    }
 
     return {
         message: 'Gửi tin nhắn thành công',
         status: 200,
-        data: message
+        data: messages
     };
 }
 
