@@ -34,12 +34,12 @@ const sendMessageService = async (senderId, data, files) => {
     
             const data = await s3.upload(paramsS3).promise();
             if(type === "file"){
-                messages.push({
+                messages.push(new MessageModel({
                     senderId: senderId,
                     conversationId: conversation.conversationId,
                     content: data.Location,
                     type
-                })
+                }))
             } else {
                 fileURL += data.Location + " "
             }
@@ -48,12 +48,12 @@ const sendMessageService = async (senderId, data, files) => {
 
     if(type !== "file"){
         // Tạo một tin nhắn mới
-        messages.push({
+        messages.push(new MessageModel({
             senderId: senderId,
             conversationId: conversation.conversationId,
             content: content || fileURL.trim(),
             type
-        })
+        }))
     }
 
     if(type === "text"){
@@ -68,7 +68,7 @@ const sendMessageService = async (senderId, data, files) => {
     await Promise.all([conversation.save()]);
     for(const message of messages) {
         // await message.save();
-        await Promise.all([new MessageModel(message).save()]);
+        await Promise.all([message.save()]);
 
         conversation.participantIds.forEach((participantId) => {
             if (participantId !== senderId) {
