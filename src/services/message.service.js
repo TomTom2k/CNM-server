@@ -20,7 +20,7 @@ const sendMessageService = async (senderId, data, files) => {
         };
     }
 
-    if (type === "image" || type === "file") {
+    if (type === "image" || type === "file" || type === "like") {
         for(const file of files) {
             // Lưu từng file vào S3 và lấy ra file url
             const filePath = `${Date.now().toString()}.${file.size}.${file?.originalname}`;
@@ -62,7 +62,10 @@ const sendMessageService = async (senderId, data, files) => {
         conversation.lastMessage = "🖼️ Hình ảnh"
     } else if(type === "file"){
         conversation.lastMessage = "🔗 " + files[files.length - 1].originalname
+    } else if(type === "like"){
+        conversation.lastMessage = fileURL.trim()
     }
+    conversation.lastMessageType = type
 
     // await conversation.save();
     await Promise.all([conversation.save()]);
