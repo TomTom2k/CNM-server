@@ -1,10 +1,10 @@
 require("dotenv").config()
-const AWS = require("../configs/aws.config")
+const {s3} = require("../configs/aws.config")
 const ConversationModel = require('../models/conversation.model');
 const MessageModel = require('../models/message.model');
 const { io, getReceiverSocketId } = require('../socket/socket');
 
-const s3 = new AWS.S3();
+// const s3 = new AWS.S3();
 
 const sendMessageService = async (senderId, data, files) => {
     const { conversationId, content, type } = data;

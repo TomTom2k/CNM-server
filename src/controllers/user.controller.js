@@ -1,8 +1,9 @@
-const { 
-	addContactForUserService, 
-	getAllContactOfUserService, 
+const {
+	addContactForUserService,
+	getAllContactOfUserService,
 	findUserByPhoneNumberService,
-	updateProfilePicService
+	updateProfilePicService,
+	changePasswordService,
 } = require("../services/user.service")
 
 // Contact
@@ -58,9 +59,21 @@ const updateProfilePic = async (req, res, next) => {
 	}
 };
 
+const changePassword = async (req, res, next) => {
+	try {
+		const data = await changePasswordService(req.body)
+		return res.status(data.status).json({
+			message: data.message,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	addContactForUser,
 	getAllContactOfUser,
 	findUserByPhoneNumber,
 	updateProfilePic,
+	changePassword,
 };

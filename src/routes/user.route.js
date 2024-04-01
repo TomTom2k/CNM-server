@@ -9,6 +9,7 @@ const {
 	getAllContactOfUser,
 	findUserByPhoneNumber,
 	updateProfilePic,
+	changePassword,
 } = require('../controllers/user.controller');
 
 router.post(
@@ -32,5 +33,9 @@ router.patch(
 	upload.single('profilePic'),
 	updateProfilePic
 );
-
+router.put(
+	'/change-password',
+	// passport.authenticate('jwt', { session: false }),
+	changePassword
+);
 module.exports = router;

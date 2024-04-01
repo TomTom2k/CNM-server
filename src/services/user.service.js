@@ -16,10 +16,10 @@ const addContactForUserService = async (userId, data) => {
         .exec();
 
     if (existingContacts && existingContacts.length > 0) {
-        return { 
-            message: 'Liên lạc đã tồn tại trong danh bạ.', 
+        return {
+            message: 'Liên lạc đã tồn tại trong danh bạ.',
             status: 400,
-            data: {} 
+            data: {}
         };
     }
 
@@ -117,9 +117,33 @@ const updateProfilePicService = async (user, file) => {
     });
 }
 
+const changePasswordService = async ({ phoneNumber, newPassword }) => {
+    const user = await UserModel.query('phoneNumber').eq(phoneNumber).exec();
+
+    // 2. Kiểm tra nếu người dùng tồn tại
+    if (user && user.length > 0) {
+        // 3. Thực hiện cập nhật mật khẩu cho người dùng
+        const updatedUser = await UserModel.update({ userID: user[0].userID }, { password: newPassword });
+        
+        // 4. Trả về kết quả cho người dùng
+        return {
+            message: 'Thay đổi mật khẩu thành công',
+            status: 200,
+            data: updatedUser,
+        };
+    } else {
+        return {
+            message: 'Không tìm thấy người dùng với số điện thoại đã cho',
+            status: 404,
+            data: {},
+        };
+    }
+};
+
 module.exports = {
     addContactForUserService,
     getAllContactOfUserService,
     findUserByPhoneNumberService,
-    updateProfilePicService
+    updateProfilePicService,
+    changePasswordService,
 }
