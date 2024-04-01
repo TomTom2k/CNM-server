@@ -29,7 +29,7 @@ const storage = multer.memoryStorage({
 const bucketName = process.env.S3_BUCKET_NAME;
 
 const createNewUser = async (user, file) => {
-	const { phoneNumber, password, gender, fullName } = user;
+	const { phoneNumber, password, gender, fullName, dateOfBirth } = user;
 
 	// Check if the phone number is already in use
 	const existingUser = await UserModel.query('phoneNumber')
@@ -63,11 +63,12 @@ const createNewUser = async (user, file) => {
 		phoneNumber: phoneNumber,
 		password: password,
 		fullName: fullName,
+		dateOfBirth: dateOfBirth,
 		gender: gender,
 		active: true,
 		profilePic: profilePic_url,
 	});
-	
+
 	await newUser.save();
 
 	return {
