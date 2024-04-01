@@ -7,7 +7,8 @@ const { io, getReceiverSocketId } = require('../socket/socket');
 
 const sendMessageService = async (senderId, data, files) => {
     const { conversationId, content, type } = data;
-    let imageURL = "";
+    let fileURL = "";
+    let messages = []
 
     // Lấy thông tin cuộc trò chuyện
     let conversation = await ConversationModel.get(conversationId);
@@ -19,13 +20,11 @@ const sendMessageService = async (senderId, data, files) => {
         };
     }
 
-    if (type === "image") {
-        for (const file of files) {
-            // Lưu từng image vào S3 và lấy ra image url
-            const image = file?.originalname.split(".");
-            const fileType = image[image.length - 1];
-            const filePath = `img_${Date.now().toString()}.${fileType}`;
-
+    if (type === "image" || type === "file" || type === "like") {
+        for(const file of files) {
+            // Lưu từng file vào S3 và lấy ra file url
+            const filePath = `${Date.now().toString()}.${file.size}.${file?.originalname}`;
+    
             const paramsS3 = {
                 Bucket: process.env.S3_BUCKET_NAME,
                 Key: filePath,
@@ -34,40 +33,60 @@ const sendMessageService = async (senderId, data, files) => {
             };
 
             const data = await s3.upload(paramsS3).promise();
-            imageURL += data.Location + " "
-        }
-    }
-
-    // Tạo một tin nhắn mới
-    const message = new MessageModel({
-        senderId: senderId,
-        conversationId: conversation.conversationId,
-        content: content || imageURL.trim(),
-        type
-    });
-    if (type === "text") {
-        conversation.lastMessage = content
-    } else if (type === "image") {
-        conversation.lastMessage = "Hình ảnh"
-    }
-
-    // await message.save();
-    // await conversation.save();
-    await Promise.all([message.save(), conversation.save()]);
-
-    conversation.participantIds.forEach((participantId) => {
-        if (participantId !== senderId) {
-            const receiverSocketId = getReceiverSocketId(participantId);
-            if (receiverSocketId) {
-                io.to(receiverSocketId).emit('newMessage', message);
+            if(type === "file"){
+                messages.push(new MessageModel({
+                    senderId: senderId,
+                    conversationId: conversation.conversationId,
+                    content: data.Location,
+                    type
+                }))
+            } else {
+                fileURL += data.Location + " "
             }
         }
-    });
+    }
+
+    if(type !== "file"){
+        // Tạo một tin nhắn mới
+        messages.push(new MessageModel({
+            senderId: senderId,
+            conversationId: conversation.conversationId,
+            content: content || fileURL.trim(),
+            type
+        }))
+    }
+
+    if(type === "text"){
+        conversation.lastMessage = content
+    } else if(type === "image"){
+        conversation.lastMessage = "🖼️ Hình ảnh"
+    } else if(type === "file"){
+        conversation.lastMessage = "🔗 " + files[files.length - 1].originalname
+    } else if(type === "like"){
+        conversation.lastMessage = fileURL.trim()
+    }
+    conversation.lastMessageType = type
+
+    // await conversation.save();
+    await Promise.all([conversation.save()]);
+    for(const message of messages) {
+        // await message.save();
+        await Promise.all([message.save()]);
+
+        conversation.participantIds.forEach((participantId) => {
+            if (participantId !== senderId) {
+                const receiverSocketId = getReceiverSocketId(participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('newMessage', message);
+                }
+            }
+        });
+    }
 
     return {
         message: 'Gửi tin nhắn thành công',
         status: 200,
-        data: message
+        data: messages
     };
 }
 

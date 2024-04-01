@@ -9,7 +9,7 @@ const {
 	getMessages,
 } = require('../controllers/message.controller');
 
-router.post('/', passport.authenticate('jwt', { session: false }), upload.array('image'), sendMessage);
+router.post('/', passport.authenticate('jwt', { session: false }), upload.array('file'), sendMessage);
 router.get(
 	'/:conversationId',
 	passport.authenticate('jwt', { session: false }),
