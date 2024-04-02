@@ -11,6 +11,7 @@ const UserSchema = new Schema(
 			default: uuidv4,
 		},
 		fullName: String,
+		dateOfBirth: String,
 		password: {
 			type: String,
 			set: (value) => bcrypt.hashSync(value, 10),

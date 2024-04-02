@@ -110,11 +110,11 @@ const updateProfilePicService = async (user, file) => {
         ])
         .exec();
 
-    return res.status(200).json({
+    return {
         message: 'Cập nhật thông tin thành công',
         status: 200,
         data: updatedUser,
-    });
+    };
 }
 
 const changePasswordService = async ({ phoneNumber, newPassword }) => {
@@ -140,10 +140,40 @@ const changePasswordService = async ({ phoneNumber, newPassword }) => {
     }
 };
 
+const updateUserInfoService = async (user, data) => {
+    const { userID } = user;
+    const {fullName, dateOfBirth, gender} = data
+
+    console.log(data)
+    // Cập nhật thông tin người dùng
+    await UserModel.update({ userID }, { fullName, dateOfBirth, gender });
+
+
+    // Lấy thông tin người dùng sau khi cập nhật
+    const updatedUser = await UserModel.scan('userID')
+        .eq(userID)
+        .attributes([
+            'userID',
+            'gender',
+            'phoneNumber',
+            'fullName',
+            'dateOfBirth',
+            'profilePic',
+        ])
+        .exec();
+
+    return {
+        message: 'Cập nhật thông tin thành công',
+        status: 200,
+        data: updatedUser,
+    };
+}
+
 module.exports = {
     addContactForUserService,
     getAllContactOfUserService,
     findUserByPhoneNumberService,
     updateProfilePicService,
     changePasswordService,
+    updateUserInfoService,
 }
