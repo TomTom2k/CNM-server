@@ -1,9 +1,9 @@
-const AWS = require('aws-sdk');
+require("dotenv").config()
 const { v4: uuidv4 } = require('uuid');
 const UserModel = require('../models/user.model');
 const ContactModel = require('../models/contact.model');
+const { s3 } = require("../configs/aws.config")
 
-const s3 = new AWS.S3();
 
 const addContactForUserService = async (userId, data) => {
     const { contactName, phoneNumber } = data;
@@ -84,7 +84,7 @@ const updateProfilePicService = async (user, file) => {
     const filePath = `avt_${Date.now().toString()}.${fileType}`;
 
     const paramsS3 = {
-        Bucket: 'zalo-clone',
+        Bucket: process.env.S3_BUCKET_NAME,
         Key: filePath,
         Body: file.buffer,
         ContentType: 'image/png',
@@ -106,6 +106,7 @@ const updateProfilePicService = async (user, file) => {
             'gender',
             'phoneNumber',
             'fullName',
+            'dateOfBirth',
             'profilePic',
         ])
         .exec();
