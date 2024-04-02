@@ -10,7 +10,8 @@ const {
 	findUserByPhoneNumber,
 	updateProfilePic,
 	changePassword,
-	updateUserInfo
+	updateUserInfo,
+	updateUserPassword
 } = require('../controllers/user.controller');
 
 router.post(
@@ -43,5 +44,10 @@ router.put(
 	'/update-info',
 	passport.authenticate('jwt', { session: false }),
 	updateUserInfo
+);
+router.patch(
+	'/update-password',
+	passport.authenticate('jwt', { session: false }),
+	updateUserPassword
 );
 module.exports = router;

@@ -1,4 +1,5 @@
 require("dotenv").config()
+const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const UserModel = require('../models/user.model');
 const ContactModel = require('../models/contact.model');
@@ -95,7 +96,7 @@ const updateProfilePicService = async (user, file) => {
     const data = await s3.upload(paramsS3).promise();
     const profilePic = data.Location;
 
-    // Cập nhật thông tin người dùng
+    // Cập nhật avatar người dùng
     await UserModel.update({ userID }, { profilePic });
 
     // Lấy thông tin người dùng sau khi cập nhật
@@ -145,7 +146,6 @@ const updateUserInfoService = async (user, data) => {
     const { userID } = user;
     const {fullName, dateOfBirth, gender} = data
 
-    console.log(data)
     // Cập nhật thông tin người dùng
     await UserModel.update({ userID }, { fullName, dateOfBirth, gender });
 
@@ -170,6 +170,59 @@ const updateUserInfoService = async (user, data) => {
     };
 }
 
+const updateUserPasswordService = async (user, data) => {
+    const { userID } = user;
+    const {currentPassword, newPassword} = data
+
+    const currentUser = await UserModel.query('userID').eq(userID).exec();
+
+    if(currentUser && currentUser.length > 0) {
+
+        const hashedPassword = currentUser[0].password;
+
+        const isCorrectPassword = await bcrypt.compare(
+            currentPassword,
+            hashedPassword
+        );
+
+        if(isCorrectPassword) {
+            // Cập nhật mật khẩu người dùng
+            await UserModel.update({ userID }, { password: newPassword });
+    
+            // Lấy thông tin người dùng sau khi cập nhật
+            const updatedUser = await UserModel.scan('userID')
+                .eq(userID)
+                .attributes([
+                    'userID',
+                    'gender',
+                    'phoneNumber',
+                    'fullName',
+                    'dateOfBirth',
+                    'profilePic',
+                ])
+                .exec();
+    
+            return {
+                message: 'Cập nhật mật khẩu thành công',
+                status: 200,
+                data: updatedUser,
+            };
+        }
+
+        return {
+            message: 'Mật khẩu hiện tại không chính xác',
+            status: 400,
+            data: {},
+        };
+    }
+
+    return {
+        message: 'Nguời dùng không tồn tại',
+        status: 404,
+        data: {},
+    };
+}
+
 module.exports = {
     addContactForUserService,
     getAllContactOfUserService,
@@ -177,4 +230,5 @@ module.exports = {
     updateProfilePicService,
     changePasswordService,
     updateUserInfoService,
+    updateUserPasswordService
 }
