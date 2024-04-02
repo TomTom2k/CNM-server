@@ -4,6 +4,7 @@ const {
 	findUserByPhoneNumberService,
 	updateProfilePicService,
 	changePasswordService,
+	updateUserInfoService
 } = require("../services/user.service")
 
 // Contact
@@ -70,10 +71,24 @@ const changePassword = async (req, res, next) => {
 	}
 };
 
+const updateUserInfo =  async (req, res, next) => {
+	try {
+		const data = await updateUserInfoService(req.user, req.body)
+
+		return res.status(data.status).json({
+			message: data.message,
+			updatedUser: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	addContactForUser,
 	getAllContactOfUser,
 	findUserByPhoneNumber,
 	updateProfilePic,
 	changePassword,
+	updateUserInfo
 };
