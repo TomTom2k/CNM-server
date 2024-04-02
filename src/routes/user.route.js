@@ -27,7 +27,7 @@ router.get(
 	findUserByPhoneNumber
 );
 router.patch(
-	'/info',
+	'/profile-pic',
 	passport.authenticate('jwt', { session: false }),
 	upload.single('profilePic'),
 	updateProfilePic
