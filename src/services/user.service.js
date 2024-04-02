@@ -1,9 +1,9 @@
-const AWS = require('aws-sdk');
+require("dotenv").config()
 const { v4: uuidv4 } = require('uuid');
 const UserModel = require('../models/user.model');
 const ContactModel = require('../models/contact.model');
+const { s3 } = require("../configs/aws.config")
 
-const s3 = new AWS.S3();
 
 const addContactForUserService = async (userId, data) => {
     const { contactName, phoneNumber } = data;
@@ -16,10 +16,10 @@ const addContactForUserService = async (userId, data) => {
         .exec();
 
     if (existingContacts && existingContacts.length > 0) {
-        return { 
-            message: 'Liên lạc đã tồn tại trong danh bạ.', 
+        return {
+            message: 'Liên lạc đã tồn tại trong danh bạ.',
             status: 400,
-            data: {} 
+            data: {}
         };
     }
 
@@ -84,7 +84,7 @@ const updateProfilePicService = async (user, file) => {
     const filePath = `avt_${Date.now().toString()}.${fileType}`;
 
     const paramsS3 = {
-        Bucket: 'zalo-clone',
+        Bucket: process.env.S3_BUCKET_NAME,
         Key: filePath,
         Body: file.buffer,
         ContentType: 'image/png',
@@ -106,20 +106,75 @@ const updateProfilePicService = async (user, file) => {
             'gender',
             'phoneNumber',
             'fullName',
+            'dateOfBirth',
             'profilePic',
         ])
         .exec();
 
-    return res.status(200).json({
+    return {
         message: 'Cập nhật thông tin thành công',
         status: 200,
         data: updatedUser,
-    });
+    };
+}
+
+const changePasswordService = async ({ phoneNumber, newPassword }) => {
+    const user = await UserModel.query('phoneNumber').eq(phoneNumber).exec();
+
+    // 2. Kiểm tra nếu người dùng tồn tại
+    if (user && user.length > 0) {
+        // 3. Thực hiện cập nhật mật khẩu cho người dùng
+        const updatedUser = await UserModel.update({ userID: user[0].userID }, { password: newPassword });
+        
+        // 4. Trả về kết quả cho người dùng
+        return {
+            message: 'Thay đổi mật khẩu thành công',
+            status: 200,
+            data: updatedUser,
+        };
+    } else {
+        return {
+            message: 'Không tìm thấy người dùng với số điện thoại đã cho',
+            status: 404,
+            data: {},
+        };
+    }
+};
+
+const updateUserInfoService = async (user, data) => {
+    const { userID } = user;
+    const {fullName, dateOfBirth, gender} = data
+
+    console.log(data)
+    // Cập nhật thông tin người dùng
+    await UserModel.update({ userID }, { fullName, dateOfBirth, gender });
+
+
+    // Lấy thông tin người dùng sau khi cập nhật
+    const updatedUser = await UserModel.scan('userID')
+        .eq(userID)
+        .attributes([
+            'userID',
+            'gender',
+            'phoneNumber',
+            'fullName',
+            'dateOfBirth',
+            'profilePic',
+        ])
+        .exec();
+
+    return {
+        message: 'Cập nhật thông tin thành công',
+        status: 200,
+        data: updatedUser,
+    };
 }
 
 module.exports = {
     addContactForUserService,
     getAllContactOfUserService,
     findUserByPhoneNumberService,
-    updateProfilePicService
+    updateProfilePicService,
+    changePasswordService,
+    updateUserInfoService,
 }

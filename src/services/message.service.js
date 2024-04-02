@@ -13,10 +13,10 @@ const sendMessageService = async (senderId, data, files) => {
     // Lấy thông tin cuộc trò chuyện
     let conversation = await ConversationModel.get(conversationId);
     if (!conversation) {
-        return { 
-            message: 'Cuộc hội thoại không tồn tại', 
-            status: 400, 
-            data: {} 
+        return {
+            message: 'Cuộc hội thoại không tồn tại',
+            status: 400,
+            data: {}
         };
     }
 
@@ -31,7 +31,7 @@ const sendMessageService = async (senderId, data, files) => {
                 Body: file.buffer,
                 ContentType: file.mimetype,
             };
-    
+
             const data = await s3.upload(paramsS3).promise();
             if(type === "file"){
                 messages.push(new MessageModel({
@@ -104,9 +104,9 @@ const getMessagesService = async (data) => {
         (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
-    return { 
-        data: messageArray, 
-        status: 200 
+    return {
+        data: messageArray,
+        status: 200
     };
 }
 
