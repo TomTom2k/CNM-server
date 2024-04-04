@@ -9,6 +9,7 @@ const sendMessageService = async (senderId, data, files) => {
     const { conversationId, content, type } = data;
     let fileURL = "";
     let messages = []
+    const savedMessages = []
 
     // Lấy thông tin cuộc trò chuyện
     let conversation = await ConversationModel.get(conversationId);
@@ -71,13 +72,14 @@ const sendMessageService = async (senderId, data, files) => {
     await Promise.all([conversation.save()]);
     for(const message of messages) {
         // await message.save();
-        await Promise.all([message.save()]);
+        const savedMessage = await message.save();
+        savedMessages.push(savedMessage)
 
         conversation.participantIds.forEach((participantId) => {
             if (participantId !== senderId) {
                 const receiverSocketId = getReceiverSocketId(participantId);
                 if (receiverSocketId) {
-                    io.to(receiverSocketId).emit('newMessage', message);
+                    io.to(receiverSocketId).emit('newMessage', savedMessage);
                 }
             }
         });
@@ -86,7 +88,7 @@ const sendMessageService = async (senderId, data, files) => {
     return {
         message: 'Gửi tin nhắn thành công',
         status: 200,
-        data: messages
+        data: savedMessages
     };
 }
 
@@ -110,7 +112,55 @@ const getMessagesService = async (data) => {
     };
 }
 
+const recallMessageService = async (data) => {
+    const { messageId } = data;
+
+    const updatedMessage = await MessageModel.update({ messageId }, { isRecalled: true });
+
+    let conversation = await ConversationModel.get(updatedMessage.conversationId);
+    if (!conversation) {
+        return {
+            message: 'Cuộc hội thoại không tồn tại',
+            status: 400,
+            data: {}
+        };
+    }
+
+    conversation.participantIds.forEach((participantId) => {
+        if (participantId !== updatedMessage.senderId) {
+            const receiverSocketId = getReceiverSocketId(participantId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('recallMessage', updatedMessage);
+            }
+        }
+    });
+
+    return {
+        message: "Thu hồi tin nhắn thành công",
+        status: 200
+    };
+}
+
+const deleteMessageForMeOnlyService = async (userId, data) => {
+    const { messageId } = data;
+
+    await MessageModel.update({ messageId }, { $ADD: { deletedUserIds: userId } });
+    
+    const updatedMessage = await MessageModel.scan('messageId')
+    .eq(messageId)
+    .exec();
+    console.log(messageId, updatedMessage)
+
+    return {
+        message: "Xóa tin nhắn chỉ ở phía tôi thành công",
+        status: 200,
+        updatedMessage
+    };
+}
+
 module.exports = {
     sendMessageService,
-    getMessagesService
+    getMessagesService,
+    recallMessageService,
+    deleteMessageForMeOnlyService
 }
