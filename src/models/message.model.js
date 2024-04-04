@@ -15,7 +15,16 @@ const MessageSchema = new Schema(
 		},
 		senderId: String,
 		content: String,
-		type: String
+		type: String,
+		isRecalled: {
+			type: Boolean,
+			default: false,
+		},
+		deletedUserIds: {
+			type: Array,
+			schema: [String],
+			default: [],
+		},
 	},
 	{
 		timestamps: true,
