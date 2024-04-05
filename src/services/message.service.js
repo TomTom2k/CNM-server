@@ -57,19 +57,6 @@ const sendMessageService = async (senderId, data, files) => {
         }))
     }
 
-    if(type === "text"){
-        conversation.lastMessage = content
-    } else if(type === "image"){
-        conversation.lastMessage = "🖼️ Hình ảnh"
-    } else if(type === "file"){
-        conversation.lastMessage = "🔗 " + files[files.length - 1].originalname
-    } else if(type === "like"){
-        conversation.lastMessage = fileURL.trim()
-    }
-    conversation.lastMessageType = type
-
-    // await conversation.save();
-    await Promise.all([conversation.save()]);
     for(const message of messages) {
         // await message.save();
         const savedMessage = await message.save();

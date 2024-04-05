@@ -14,8 +14,6 @@ const ConversationSchema = new dynamoose.Schema(
 			type: Array,
 			schema: [String],
 		},
-		lastMessage: String,
-		lastMessageType: String,
 	},
 	{
 		saveUnknown: true,

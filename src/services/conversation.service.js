@@ -1,5 +1,6 @@
 const Conversation = require('../models/conversation.model');
 const ConversationModel = require('../models/conversation.model');
+const MessageModel = require('../models/message.model');
 const User = require('../models/user.model');
 const checkUserId = require('../utils/checkUserId');
 
@@ -107,7 +108,42 @@ const createConversationService = async (data) => {
 		};
 }
 
+const getLastMessageService = async (userID, data) => {
+    const { conversationId } = data;
+
+	// Lấy danh sách tin nhắn của cuộc trò chuyện
+	const messages = await MessageModel.query('conversationId')
+        .eq(conversationId)
+        .exec();
+
+    const filterMessages = messages.filter(message => {
+        return !message.deletedUserIds?.includes(userID)
+    })
+
+    const messageArray = filterMessages.map((message) => message.toJSON());
+
+    // Sắp xếp mảng tin nhắn theo createdAt
+    messageArray.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
+
+    let lastMessage = messageArray[messageArray.length - 1]
+
+    const sender = await User.query('userID')
+    .eq(lastMessage.senderId)
+    .exec();
+
+    lastMessage = {...lastMessage, senderName: sender[0].fullName}
+
+    return {
+		message: 'Lấy last message thành công',
+        data: lastMessage,
+        status: 200
+    };
+}
+
 module.exports = {
     getConversationsService,
-    createConversationService
+    createConversationService,
+	getLastMessageService
 }
