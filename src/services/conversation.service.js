@@ -97,7 +97,6 @@ const createConversationService = async (data) => {
 		let conversation = new ConversationModel({
 			name: name,
 			participantIds: participantIds,
-			lastMessage: '',
 		});
 		conversation = await conversation.save();
 
