@@ -5,6 +5,8 @@ require('../middleware/passport');
 const {
 	getConversations,
 	createConversation,
+	getLastMessage,
+	getRecentlyConversations
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -16,6 +18,16 @@ router.post(
 	'/',
 	passport.authenticate('jwt', { session: false }),
 	createConversation
+);
+router.get(
+	'/:conversationId',
+	passport.authenticate('jwt', { session: false }),
+	getLastMessage
+);
+router.get(
+	'/recently/:quantity',
+	passport.authenticate('jwt', { session: false }),
+	getRecentlyConversations
 );
 
 module.exports = router;

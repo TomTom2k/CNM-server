@@ -53,7 +53,7 @@ const addContactForUserService = async (userId, data) => {
 }
 
 const getAllContactOfUserService = async (userId) => {
-    const contacts = await Contact.query('userID').eq(userId).exec();
+    const contacts = await ContactModel.query('userID').eq(userId).exec();
     return {
         message: 'Lấy thành công danh sách liên hệ của người dùng',
         status: 200,
