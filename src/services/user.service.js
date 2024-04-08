@@ -223,6 +223,199 @@ const updateUserPasswordService = async (user, data) => {
     };
 }
 
+const addFriendService = async (data) => {
+    const { userId, friendId } = data;
+
+    try {
+        // Lấy thông tin người dùng hiện tại
+        const currentUser = await UserModel.get(userId);
+
+        // Kiểm tra nếu người dùng đã có bạn bè
+        const friends = currentUser.friends || [];
+
+        // Kiểm tra xem friendId đã tồn tại trong danh sách bạn bè chưa
+        if (!friends.includes(friendId)) {
+            // Thêm friendId vào mảng bạn bè của người dùng
+            friends.push(friendId);
+
+            // Cập nhật mảng bạn bè mới vào người dùng
+            await UserModel.update({ userID: userId }, { friends });
+
+               //Cập nhật mảng bạn bè mới vào người dùng friendId
+            const friendUser = await UserModel.get(friendId);
+        
+            const friendsOfFriend = friendUser.friends || [];
+            friendsOfFriend.push(userId);
+            await UserModel.update({ userID: friendId }, { friends: friendsOfFriend });
+            
+            //Xóa khỏi danh sách lời mời kết bạn của người user
+            const listRequestAddFriendsReceived = currentUser.listRequestAddFriendsReceived || [];
+            const updatedListRequestAddFriendsReceived = listRequestAddFriendsReceived.filter((id) => id !== friendId);
+            await UserModel.update({ userID: userId }, { listRequestAddFriendsReceived: updatedListRequestAddFriendsReceived });
+
+            // //xóa khỏi danh sách đã gửi của người gửi
+            const listRequestAddFriendsSent = friendUser.listRequestAddFriendsSent || [];
+            const updatedListRequestAddFriendsSent = listRequestAddFriendsSent.filter((id) => id !== userId);
+            await UserModel.update({ userID: friendId }, { listRequestAddFriendsSent: updatedListRequestAddFriendsSent });
+
+
+            return {
+                message: 'Thêm bạn thành công',
+                status: 200,
+                data: friends, // Trả về danh sách bạn bè mới
+            };
+        } else {
+            return {
+                message: 'Người dùng đã là bạn bè của nhau',
+                status: 400,
+                data: {},
+            };
+        }
+    } catch (error) {
+        console.error('Error adding friend:', error);
+        return {
+            message: 'Có lỗi xảy ra khi thêm bạn',
+            status: 500,
+            data: {},
+        };
+    }
+}
+
+const requestAddFriendsSent = async (data) => {
+    try {
+        const { userId, friendId } = data;
+        console.log('userId:', userId);
+        console.log('friendId:', friendId);
+
+        // 1. Lấy thông tin người dùng gửi lời mời kết bạn
+        const currentUser = await UserModel.get(userId);
+        console.log('currentUser:', currentUser);
+
+        // 2. Thêm friendId vào mảng listRequestAddFriendsSent của người dùng gửi lời mời kết bạn
+        const listRequestAddFriendsSent = currentUser.listRequestAddFriendsSent || [];
+        if (!listRequestAddFriendsSent.includes(friendId)) {
+            listRequestAddFriendsSent.push(friendId);
+            await UserModel.update({ userID: userId }, { listRequestAddFriendsSent });
+        }
+
+        // 3. Thêm userId vào mảng listRequestAddFriendsReceived của người dùng nhận lời mời kết bạn
+        const friendUser = await UserModel.get(friendId);
+        console.log('friendUser:', friendUser);
+        const listRequestAddFriendsReceived = friendUser.listRequestAddFriendsReceived || [];
+        if (!listRequestAddFriendsReceived.includes(userId)) {
+            listRequestAddFriendsReceived.push(userId);
+            await UserModel.update({ userID: friendId }, { listRequestAddFriendsReceived });
+        }
+
+        return {
+            message: 'Lời mời kết bạn đã được gửi',
+            status: 200,
+            data: {},
+        };
+    } catch (error) {
+        console.error('Error sending friend request:', error);
+        return {
+            message: 'Có lỗi xảy ra khi gửi lời mời kết bạn',
+            status: 500,
+            data: {},
+        };
+    }
+}
+
+const getAllInFoUser = async (userId) => {
+    const user = await UserModel.get(userId);
+    return {
+        message: 'Lấy thông tin người dùng thành công',
+        status: 200,
+        data: user,
+    };
+}
+
+const getUserById = async (userId) => {
+    const user = await UserModel.get(userId);
+    return {
+        message: 'Lấy thông tin người dùng thành công',
+        status: 200,
+        data: user,
+    };
+}
+
+const cancelAddFriends = async (data) => {
+    try {
+        const { userId, friendId } = data;
+        
+        const currentUser = await UserModel.get(userId);   
+        const listRequestAddFriendsSent = currentUser.listRequestAddFriendsSent || [];
+        const updatedListRequestAddFriendsSent = listRequestAddFriendsSent.filter((id) => id !== friendId);
+        await UserModel.update({ userID: userId }, { listRequestAddFriendsSent: updatedListRequestAddFriendsSent });
+       
+        const friendUser = await UserModel.get(friendId);
+        const listRequestAddFriendsReceived = friendUser.listRequestAddFriendsReceived || [];
+        const updatedListRequestAddFriendsReceived = listRequestAddFriendsReceived.filter((id) => id !== userId);
+        await UserModel.update({ userID: friendId }, { listRequestAddFriendsReceived: updatedListRequestAddFriendsReceived });
+
+        return {
+            message: 'Hủy lời mời kết bạn thành công',
+            status: 200,
+            data: {},
+        };
+    } catch (error) {
+        console.error('Error canceling friend request:', error);
+        return {
+            message: 'Có lỗi xảy ra khi hủy lời mời kết bạn',
+            status: 500,
+            data: {},
+        };
+    }
+}
+
+const deleteFriendService = async (data) => {
+    const { userId, friendId } = data;
+
+    try {
+        // Lấy thông tin người dùng hiện tại
+        const currentUser = await UserModel.get(userId);
+
+        // Kiểm tra nếu người dùng đã có bạn bè
+        const friends = currentUser.friends || [];
+
+        // Kiểm tra xem friendId đã tồn tại trong danh sách bạn bè chưa
+        if (friends.includes(friendId)) {
+            // Xóa friendId khỏi mảng bạn bè của người dùng
+            const updatedFriends = friends.filter((id) => id !== friendId);
+
+            // Cập nhật mảng bạn bè mới vào người dùng
+            await UserModel.update({ userID: userId }, { friends: updatedFriends });
+
+            //Xóa khỏi danh sách bạn bè của friendId
+            const friendUser = await UserModel.get(friendId);
+            const friendsOfFriend = friendUser.friends || [];
+            const updatedFriendsOfFriend = friendsOfFriend.filter((id) => id !== userId);
+            await UserModel.update({ userID: friendId }, { friends: updatedFriendsOfFriend });
+
+            return {
+                message: 'Xóa bạn thành công',
+                status: 200,
+                data: updatedFriends, // Trả về danh sách bạn bè mới
+            };
+        } else {
+            return {
+                message: 'Người dùng không phải là bạn bè của nhau',
+                status: 400,
+                data: {},
+            };
+        }
+    } catch (error) {
+        console.error('Error deleting friend:', error);
+        return {
+            message: 'Có lỗi xảy ra khi xóa bạn',
+            status: 500,
+            data: {},
+        };
+    }
+}
+
+
 module.exports = {
     addContactForUserService,
     getAllContactOfUserService,
@@ -230,5 +423,11 @@ module.exports = {
     updateProfilePicService,
     changePasswordService,
     updateUserInfoService,
-    updateUserPasswordService
+    updateUserPasswordService,
+    addFriendService,
+    requestAddFriendsSent,
+    getAllInFoUser,
+    getUserById,
+    cancelAddFriends,
+    deleteFriendService
 }

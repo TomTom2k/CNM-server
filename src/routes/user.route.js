@@ -11,7 +11,13 @@ const {
 	updateProfilePic,
 	changePassword,
 	updateUserInfo,
-	updateUserPassword
+	updateUserPassword,
+	addFriend,
+	sentAddFriend,
+	inFoUser,
+	findUserById,
+	cancelFriend,
+	deleteFriend
 } = require('../controllers/user.controller');
 
 router.post(
@@ -50,4 +56,37 @@ router.patch(
 	passport.authenticate('jwt', { session: false }),
 	updateUserPassword
 );
+router.put(
+	'/add-friend',
+	passport.authenticate('jwt', { session: false }),
+	addFriend
+);
+router.put(
+	'/sent-request-add-friend',
+	passport.authenticate('jwt', { session: false }),
+	sentAddFriend
+);
+router.get(
+	'/info-user',
+	passport.authenticate('jwt', { session: false }),
+	inFoUser
+);
+router.get(
+	'/find-user-by-id/:userId',
+	passport.authenticate('jwt', { session: false }),
+	findUserById
+);
+
+router.put(
+	'/cancel-friend',
+	passport.authenticate('jwt', { session: false }),
+	cancelFriend
+);
+
+router.put(
+	'/delete-friend',
+	passport.authenticate('jwt', { session: false }),
+	deleteFriend
+);
+
 module.exports = router;

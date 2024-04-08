@@ -34,6 +34,21 @@ const UserSchema = new Schema(
 			type: String,
 			default: 't',
 		},
+		friends: {
+			type: Array,
+			schema: [String],
+			default: [],	
+		},
+		listRequestAddFriendsSent: {
+			type: Array,
+			schema: [String],
+			default: [],
+		},
+		listRequestAddFriendsReceived: {
+			type: Array,
+			schema: [String],
+			default: [],
+		},
 	},
 	{
 		timestamps: true,
