@@ -8,7 +8,8 @@ const {
 	sendMessage,
 	getMessages,
 	recallMessage,
-	deleteMessageForMeOnly
+	deleteMessageForMeOnly,
+	shareMessage
 } = require('../controllers/message.controller');
 
 router.post(
@@ -31,6 +32,11 @@ router.patch(
 	'/delete-message-for-me-only/:messageId',
 	passport.authenticate('jwt', { session: false }),
 	deleteMessageForMeOnly
+);
+router.post(
+	'/share-message',
+	passport.authenticate('jwt', { session: false }),
+	shareMessage
 );
 
 module.exports = router;

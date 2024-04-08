@@ -115,28 +115,65 @@ const getLastMessageService = async (userID, data) => {
         .eq(conversationId)
         .exec();
 
-    const filterMessages = messages.filter(message => {
-        return !message.deletedUserIds?.includes(userID)
-    })
-
-    const messageArray = filterMessages.map((message) => message.toJSON());
-
-    // Sắp xếp mảng tin nhắn theo createdAt
-    messageArray.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-    );
-
-    let lastMessage = messageArray[messageArray.length - 1]
-
-    const sender = await User.query('userID')
-    .eq(lastMessage.senderId)
-    .exec();
-
-    lastMessage = {...lastMessage, senderName: sender[0].fullName}
+    if(messages && messages.length > 0){
+        const filterMessages = messages.filter(message => {
+            return !message.deletedUserIds?.includes(userID)
+        })
+    
+        const messageArray = filterMessages.map((message) => message.toJSON());
+    
+        // Sắp xếp mảng tin nhắn theo createdAt
+        messageArray.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
+    
+        let lastMessage = messageArray[messageArray.length - 1]
+    
+        const sender = await User.query('userID')
+        .eq(lastMessage.senderId)
+        .exec();
+    
+        lastMessage = {...lastMessage, senderName: sender[0].fullName}
+    
+        return {
+            message: 'Lấy last message thành công',
+            data: lastMessage,
+            status: 200
+        };
+    }
 
     return {
-		message: 'Lấy last message thành công',
-        data: lastMessage,
+        message: 'Cuộc trò chuyện chưa có tin nhắn',
+        data: null,
+        status: 200
+    };
+}
+
+const getRecentlyConversationsService = async (userID, data) => {
+    const { quantity } = data;
+
+    const conversations = await getConversationsService(userID)
+
+    const conversationsWithLastMessage = await Promise.all(conversations?.data.map(async (conversation) => {
+        const lastMessage = await getLastMessageService(userID, conversation);
+        if(lastMessage.data){
+            return { ...conversation, lastMessage : lastMessage.data };
+        }
+        return null;
+    }))
+
+    const conversationsHaveMessage = conversationsWithLastMessage.filter(conversation => 
+        conversation !== null
+    )
+
+
+    conversationsHaveMessage.sort(
+        (a, b) => new Date(b.lastMessage?.createdAt) - new Date(a.lastMessage?.createdAt)
+    );
+
+    return {
+		message: 'Lấy các conversation gần đây thành công',
+        data: conversationsHaveMessage.slice(0, quantity),
         status: 200
     };
 }
@@ -144,5 +181,6 @@ const getLastMessageService = async (userID, data) => {
 module.exports = {
     getConversationsService,
     createConversationService,
-	getLastMessageService
+	getLastMessageService,
+    getRecentlyConversationsService,
 }

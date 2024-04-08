@@ -145,9 +145,57 @@ const deleteMessageForMeOnlyService = async (userId, data) => {
     };
 }
 
+const shareMessageService = async (userId, data) => {
+    const { checkedConversations, messageContent, messageType } = data;
+    let sharedConversations = []
+
+    for(const checkedConversation of checkedConversations) {
+        let conversation = await ConversationModel.get(checkedConversation);
+        if (!conversation) {
+            return {
+                message: 'Cuộc hội thoại không tồn tại',
+                status: 400,
+                data: []
+            };
+        }
+
+        const message = new MessageModel({
+            senderId: userId,
+            conversationId: conversation.conversationId,
+            content: messageContent,
+            type: messageType
+        })
+
+        const savedMessage = await message.save();
+
+        const sharedConversation = {
+            conversation,
+            savedMessage
+        }
+
+        sharedConversations.push(sharedConversation)
+
+        conversation.participantIds.forEach((participantId) => {
+            if (participantId !== userId) {
+                const receiverSocketId = getReceiverSocketId(participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('newMessage', savedMessage);
+                }
+            }
+        });
+    }
+
+    return {
+        message: "Chia sẻ tin nhắn thành công",
+        status: 200,
+        data: sharedConversations
+    };
+}
+
 module.exports = {
     sendMessageService,
     getMessagesService,
     recallMessageService,
-    deleteMessageForMeOnlyService
+    deleteMessageForMeOnlyService,
+    shareMessageService
 }
