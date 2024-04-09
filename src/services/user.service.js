@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const UserModel = require('../models/user.model');
 const ContactModel = require('../models/contact.model');
+const ConversationModel = require('../models/conversation.model');
 const { s3 } = require("../configs/aws.config")
 
 
@@ -415,6 +416,47 @@ const deleteFriendService = async (data) => {
     }
 }
 
+const getAllFriendsWithConversationIdService = async (user) => {
+    let friends = []
+    for(const friend of user.friends) {
+        const friendInfo = await UserModel.scan('userID')
+            .eq(friend)
+            .attributes([
+                'userID',
+                'gender',
+                'phoneNumber',
+                'fullName',
+                'dateOfBirth',
+                'profilePic',
+            ])
+            .exec();
+
+        const conversations = await ConversationModel.scan().exec();
+
+        const conversationsOfUserAndFriend = conversations.find((conversation) =>
+            conversation.participantIds.includes(user.userID) &&  conversation.participantIds.includes(friend)
+        );
+        
+        friends.push({...friendInfo[0], conversationId: conversationsOfUserAndFriend.conversationId})
+    }
+
+    friends.sort(
+        (a, b) => {
+            let x = a.fullName.toLowerCase();
+            let y = b.fullName.toLowerCase();
+            if (x < y) {return -1;}
+            if (x > y) {return 1;}
+            return 0;
+        }
+    );
+
+    return {
+		message: 'Lấy tất cả friends thành công',
+        data: friends,
+        status: 200
+    };
+}
+
 
 module.exports = {
     addContactForUserService,
@@ -429,5 +471,6 @@ module.exports = {
     getAllInFoUser,
     getUserById,
     cancelAddFriends,
-    deleteFriendService
+    deleteFriendService,
+    getAllFriendsWithConversationIdService
 }
