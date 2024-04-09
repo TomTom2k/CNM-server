@@ -1,5 +1,6 @@
 const Conversation = require('../models/conversation.model');
 const ConversationModel = require('../models/conversation.model');
+const MessageModel = require('../models/message.model');
 const User = require('../models/user.model');
 const checkUserId = require('../utils/checkUserId');
 
@@ -96,7 +97,6 @@ const createConversationService = async (data) => {
 		let conversation = new ConversationModel({
 			name: name,
 			participantIds: participantIds,
-			lastMessage: '',
 		});
 		conversation = await conversation.save();
 
@@ -107,7 +107,80 @@ const createConversationService = async (data) => {
 		};
 }
 
+const getLastMessageService = async (userID, data) => {
+    const { conversationId } = data;
+
+	// Lấy danh sách tin nhắn của cuộc trò chuyện
+	const messages = await MessageModel.query('conversationId')
+        .eq(conversationId)
+        .exec();
+
+    if(messages && messages.length > 0){
+        const filterMessages = messages.filter(message => {
+            return !message.deletedUserIds?.includes(userID)
+        })
+    
+        const messageArray = filterMessages.map((message) => message.toJSON());
+    
+        // Sắp xếp mảng tin nhắn theo createdAt
+        messageArray.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
+    
+        let lastMessage = messageArray[messageArray.length - 1]
+    
+        const sender = await User.query('userID')
+        .eq(lastMessage.senderId)
+        .exec();
+    
+        lastMessage = {...lastMessage, senderName: sender[0].fullName}
+    
+        return {
+            message: 'Lấy last message thành công',
+            data: lastMessage,
+            status: 200
+        };
+    }
+
+    return {
+        message: 'Cuộc trò chuyện chưa có tin nhắn',
+        data: null,
+        status: 200
+    };
+}
+
+const getRecentlyConversationsService = async (userID, data) => {
+    const { quantity } = data;
+
+    const conversations = await getConversationsService(userID)
+
+    const conversationsWithLastMessage = await Promise.all(conversations?.data.map(async (conversation) => {
+        const lastMessage = await getLastMessageService(userID, conversation);
+        if(lastMessage.data){
+            return { ...conversation, lastMessage : lastMessage.data };
+        }
+        return null;
+    }))
+
+    const conversationsHaveMessage = conversationsWithLastMessage.filter(conversation => 
+        conversation !== null
+    )
+
+
+    conversationsHaveMessage.sort(
+        (a, b) => new Date(b.lastMessage?.createdAt) - new Date(a.lastMessage?.createdAt)
+    );
+
+    return {
+		message: 'Lấy các conversation gần đây thành công',
+        data: conversationsHaveMessage.slice(0, quantity),
+        status: 200
+    };
+}
+
 module.exports = {
     getConversationsService,
-    createConversationService
+    createConversationService,
+	getLastMessageService,
+    getRecentlyConversationsService,
 }
