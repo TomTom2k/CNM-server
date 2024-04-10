@@ -17,7 +17,8 @@ const {
 	inFoUser,
 	findUserById,
 	cancelFriend,
-	deleteFriend
+	deleteFriend,
+	getAllFriendsWithConversationId
 } = require('../controllers/user.controller');
 
 router.post(
@@ -87,6 +88,12 @@ router.put(
 	'/delete-friend',
 	passport.authenticate('jwt', { session: false }),
 	deleteFriend
+);
+
+router.get(
+	'/get-all-friends-with-conversationid',
+	passport.authenticate('jwt', { session: false }),
+	getAllFriendsWithConversationId
 );
 
 module.exports = router;
