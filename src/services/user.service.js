@@ -434,7 +434,9 @@ const getAllFriendsWithConversationIdService = async (user) => {
         const conversations = await ConversationModel.scan().exec();
 
         const conversationsOfUserAndFriend = conversations.find((conversation) =>
-            conversation.participantIds.includes(user.userID) &&  conversation.participantIds.includes(friend)
+            conversation.participantIds.length = 2
+            && conversation.participantIds.includes(user.userID) 
+            &&  conversation.participantIds.includes(friend)
         );
         
         friends.push({...friendInfo[0], conversationId: conversationsOfUserAndFriend.conversationId})
