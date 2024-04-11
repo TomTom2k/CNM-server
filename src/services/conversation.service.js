@@ -5,6 +5,7 @@ const User = require('../models/user.model');
 const checkUserId = require('../utils/checkUserId');
 
 const getConversationsService = async (senderId) => {
+    const resConversations = []
     const conversations = await Conversation.scan().exec();
 
     // Lọc các cuộc trò chuyện mà senderId tham gia
@@ -39,8 +40,17 @@ const getConversationsService = async (senderId) => {
         return { ...conversation, membersInfo };
     });
 
+    for(const conversationsWithMember of conversationsWithMembers){
+        const lastMessage = await getLastMessageService(senderId, {conversationId: conversationsWithMember.conversationId})
+        resConversations.push({...conversationsWithMember, lastMessage: lastMessage.data})
+    }
+
+    resConversations.sort(
+        (a, b) => new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt)
+    );
+
     return {
-        data: conversationsWithMembers,
+        data: resConversations,
         status: 200
     }
 }
