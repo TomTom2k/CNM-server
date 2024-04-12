@@ -3,6 +3,7 @@ const { s3 } = require("../configs/aws.config")
 const ConversationModel = require('../models/conversation.model');
 const MessageModel = require('../models/message.model');
 const { io, getReceiverSocketId } = require('../socket/socket');
+const User = require('../models/user.model');
 
 
 const sendMessageService = async (senderId, data, files) => {
@@ -62,14 +63,20 @@ const sendMessageService = async (senderId, data, files) => {
         const savedMessage = await message.save();
         savedMessages.push(savedMessage)
 
-        conversation.participantIds.forEach((participantId) => {
+        for(const participantId of conversation.participantIds) {
             if (participantId.participantId !== senderId) {
+                const senderInfo = await User.scan('userID')
+                .eq(message.senderId)
+                .attributes([
+                    'profilePic',
+                ])
+                .exec();
                 const receiverSocketId = getReceiverSocketId(participantId.participantId);
                 if (receiverSocketId) {
-                    io.to(receiverSocketId).emit('newMessage', savedMessage);
+                    io.to(receiverSocketId).emit('newMessage', {...savedMessage, senderAvatar: senderInfo[0].profilePic});
                 }
             }
-        });
+        };
     }
 
     return {
@@ -79,8 +86,9 @@ const sendMessageService = async (senderId, data, files) => {
     };
 }
 
-const getMessagesService = async (data) => {
+const getMessagesService = async (userID, data) => {
     const { conversationId } = data;
+    let resMessages = []
 
     // Lấy danh sách tin nhắn của cuộc trò chuyện
     const messages = await MessageModel.query('conversationId')
@@ -88,13 +96,29 @@ const getMessagesService = async (data) => {
         .exec();
     const messageArray = messages.map((message) => message.toJSON());
 
+    for(const message of messageArray){
+        if(message.senderId !== userID){
+            const senderInfo = await User.scan('userID')
+            .eq(message.senderId)
+            .attributes([
+                'profilePic',
+            ])
+            .exec();
+    
+            resMessages.push({...message, senderAvatar: senderInfo[0].profilePic})
+        }
+        else{
+            resMessages.push(message)
+        }
+    }
+
     // Sắp xếp mảng tin nhắn theo createdAt
-    messageArray.sort(
+    resMessages.sort(
         (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
     );
 
     return {
-        data: messageArray,
+        data: resMessages,
         status: 200
     };
 }

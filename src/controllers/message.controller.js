@@ -21,7 +21,7 @@ const sendMessage = async (req, res, next) => {
 
 const getMessages = async (req, res, next) => {
 	try {
-		const data = await getMessagesService(req.params);
+		const data = await getMessagesService(req.user.userID, req.params);
 
 		res.status(data.status).json({ messages: data.data });
 	} catch (error) {
