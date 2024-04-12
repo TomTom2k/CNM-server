@@ -115,15 +115,6 @@ const createConversationService = async (userID, data, avatar) => {
     }
 
     if(participantIds.length === 2){
-        const anotherParticipantId = participantIds.find(participantId => {
-            participantId !== userID
-        })
-        const anotherUser = await User.query('userID')
-        .eq(anotherParticipantId)
-        .exec();
-
-        conversationAvatar = anotherUser[0].profilePic;
-        conversationName = anotherUser[0].fullName;
         conversationParticipants = participantIds.map(participantId => {
             return {participantId, role: "member"}
         })
