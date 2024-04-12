@@ -13,7 +13,15 @@ const ConversationSchema = new dynamoose.Schema(
 		avatar: String,
 		participantIds: {
 			type: Array,
-			schema: [String],
+			schema: [
+				{
+					type: Object,
+					schema: {
+						participantId: String,
+						role: String
+					}
+				},
+			],
 		},
 	},
 	{

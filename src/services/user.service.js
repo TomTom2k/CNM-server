@@ -435,8 +435,8 @@ const getAllFriendsWithConversationIdService = async (user) => {
 
         const conversationsOfUserAndFriend = conversations.find((conversation) =>
             conversation.participantIds.length = 2
-            && conversation.participantIds.includes(user.userID) 
-            &&  conversation.participantIds.includes(friend)
+            && conversation.participantIds.some(participant => participant.participantId === user.userID)
+            && conversation.participantIds.some(participant => participant.participantId === friend)
         );
         
         friends.push({...friendInfo[0], conversationId: conversationsOfUserAndFriend.conversationId})

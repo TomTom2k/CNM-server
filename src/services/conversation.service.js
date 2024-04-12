@@ -7,62 +7,67 @@ const checkUserId = require('../utils/checkUserId');
 const { s3 } = require("../configs/aws.config")
 
 const getConversationsService = async (senderId) => {
-    const resConversations = []
-    const conversations = await Conversation.scan().exec();
-
-    // Lọc các cuộc trò chuyện mà senderId tham gia
-    const conversationsOfSender = conversations.filter((conversation) =>
-        conversation.participantIds.includes(senderId)
-    );
-
-    const memberIds = conversationsOfSender.reduce((acc, conversation) => {
-        acc.push(...conversation.participantIds);
-        return acc;
-    }, []);
-
-    // Sử dụng Set để loại bỏ các phần tử trùng lặp
-    const uniqueMemberIds = [...new Set(memberIds)];
-
-    // Lấy thông tin của tất cả các thành viên một lần bằng cách sử dụng batchGet
-    const members = await User.batchGet(uniqueMemberIds, {
-        attributes: ['userID', 'fullName', 'profilePic'],
-    });
-
-    // Tạo một đối tượng để lưu trữ thông tin của người dùng
-    const membersMap = {};
-    members.forEach((member) => {
-        membersMap[member.userID] = member;
-    });
-
-    // Kết hợp thông tin của thành viên vào mỗi cuộc trò chuyện
-    const conversationsWithMembers = conversationsOfSender.map((conversation) => {
-        const membersInfo = conversation.participantIds.map(
-            (memberId) => membersMap[memberId]
+    try {
+        const resConversations = []
+        const conversations = await Conversation.scan().exec();
+    
+        // Lọc các cuộc trò chuyện mà senderId tham gia
+        const conversationsOfSender = conversations.filter((conversation) =>
+            conversation.participantIds.some(participant => participant.participantId === senderId)
         );
-        return { ...conversation, membersInfo };
-    });
-
-    for(const conversationsWithMember of conversationsWithMembers){
-        const lastMessage = await getLastMessageService(senderId, {conversationId: conversationsWithMember.conversationId})
-        resConversations.push({...conversationsWithMember, lastMessage: lastMessage.data})
-    }
-
-    resConversations.sort((a, b) => {
-        const dateA = a.lastMessage ? new Date(a.lastMessage.createdAt) : new Date(a.createdAt);
-        const dateB = b.lastMessage ? new Date(b.lastMessage.createdAt) : new Date(b.createdAt);
-        return dateB - dateA;
-    });
-
-    return {
-        data: resConversations,
-        status: 200
+    
+        const memberIds = conversationsOfSender.reduce((acc, conversation) => {
+            acc.push(...conversation.participantIds.map(participant => participant.participantId));
+            return acc;
+        }, []);
+    
+        // Sử dụng Set để loại bỏ các phần tử trùng lặp
+        const uniqueMemberIds = [...new Set(memberIds)];
+    
+        // Lấy thông tin của tất cả các thành viên một lần bằng cách sử dụng batchGet
+        const members = await User.batchGet(uniqueMemberIds, {
+            attributes: ['userID', 'fullName', 'profilePic'],
+        });
+    
+        // Tạo một đối tượng để lưu trữ thông tin của người dùng
+        const membersMap = {};
+        members.forEach((member) => {
+            membersMap[member.userID] = member;
+        });
+    
+        // Kết hợp thông tin của thành viên vào mỗi cuộc trò chuyện
+        const conversationsWithMembers = conversationsOfSender.map((conversation) => {
+            const membersInfo = conversation.participantIds.map(
+                (participant) => membersMap[participant.participantId]
+            );
+            return { ...conversation, membersInfo };
+        });
+    
+        for(const conversationsWithMember of conversationsWithMembers){
+            const lastMessage = await getLastMessageService(senderId, {conversationId: conversationsWithMember.conversationId})
+            resConversations.push({...conversationsWithMember, lastMessage: lastMessage.data})
+        }
+    
+        resConversations.sort((a, b) => {
+            const dateA = a.lastMessage ? new Date(a.lastMessage.createdAt) : new Date(a.createdAt);
+            const dateB = b.lastMessage ? new Date(b.lastMessage.createdAt) : new Date(b.createdAt);
+            return dateB - dateA;
+        });
+    
+        return {
+            data: resConversations,
+            status: 200
+        }
+    } catch (error) {
+        console.log(error)
     }
 }
 
 const createConversationService = async (userID, data, avatar) => {
     const { name, participantIds } = data;
-    let conversationAvatar = ""
-    let conversationName = ""
+    let conversationAvatar = "";
+    let conversationName = "";
+    let conversationParticipants = [];
 
     // Kiểm tra xem số lượng participantIds phải là ít nhất 2
     if (participantIds.length < 2) {
@@ -79,7 +84,7 @@ const createConversationService = async (userID, data, avatar) => {
     const matchingConversations = existingConversation.filter(
         (conversation) => {
             return participantIds.every((id) =>
-                conversation.participantIds.includes(id)
+                conversation.participantIds.some(participant => participant.participantId === id)
             );
         }
     );
@@ -117,12 +122,18 @@ const createConversationService = async (userID, data, avatar) => {
         .eq(anotherParticipantId)
         .exec();
 
-        conversationAvatar = anotherUser[0].profilePic
-        conversationName = anotherUser[0].fullName
+        conversationAvatar = anotherUser[0].profilePic;
+        conversationName = anotherUser[0].fullName;
+        conversationParticipants = participantIds.map(participantId => {
+            return {participantId, role: "member"}
+        })
     }
 
     if(participantIds.length > 2){
-        conversationName = name
+        conversationName = name;
+        conversationParticipants = participantIds.map(participantId => {
+            return {participantId, role: participantId === userID ? "owner" : "member"}
+        })
 
         const image = avatar.originalname.split('.');
         const fileType = image[image.length - 1];
@@ -144,7 +155,7 @@ const createConversationService = async (userID, data, avatar) => {
     let conversation = new ConversationModel({
         avatar: conversationAvatar,
         name: conversationName,
-        participantIds: participantIds,
+        participantIds: conversationParticipants, // Thay đổi ở đây để truy cập vào trường participantId trong mỗi object
     });
     conversation = await conversation.save();
 
@@ -202,26 +213,11 @@ const getRecentlyConversationsService = async (userID, data) => {
 
     const conversations = await getConversationsService(userID)
 
-    const conversationsWithLastMessage = await Promise.all(conversations?.data.map(async (conversation) => {
-        const lastMessage = await getLastMessageService(userID, conversation);
-        if(lastMessage.data){
-            return { ...conversation, lastMessage : lastMessage.data };
-        }
-        return null;
-    }))
-
-    const conversationsHaveMessage = conversationsWithLastMessage.filter(conversation => 
-        conversation !== null
-    )
-
-
-    conversationsHaveMessage.sort(
-        (a, b) => new Date(b.lastMessage?.createdAt) - new Date(a.lastMessage?.createdAt)
-    );
+    const recentlyConversations = conversations?.data.slice(0, quantity)
 
     return {
 		message: 'Lấy các conversation gần đây thành công',
-        data: conversationsHaveMessage.slice(0, quantity),
+        data: recentlyConversations,
         status: 200
     };
 }
@@ -238,37 +234,20 @@ const getRecentlyFriendConversationsService = async (userID, data) => {
     for (const conversation of conversations.data) {
         if(conversation.participantIds.length === 2){
             const anotherParticipantId = conversation.participantIds.find(participantId => {
-                return participantId !== userID;
+                return participantId.participantId !== userID;
             });
-            const isFriend = user[0].friends.includes(anotherParticipantId);
+            const isFriend = user[0].friends.includes(anotherParticipantId.participantId);
             if (isFriend) {
-                conversationsWithFriend.push({...conversation, anotherParticipantId});
+                conversationsWithFriend.push({...conversation, anotherParticipantId: anotherParticipantId.participantId});
             }
         }
     }
 
-    const conversationsWithLastMessage = await Promise.all(conversationsWithFriend?.map(async (conversation) => {
-        const lastMessage = await getLastMessageService(userID, conversation);
-        if(lastMessage.data){
-            return { ...conversation, lastMessage : lastMessage.data };
-        }
-        return null;
-    }))
-
-    const conversationsHaveMessage = conversationsWithLastMessage.filter(conversation => 
-        conversation !== null
-    )
-
-
-    conversationsHaveMessage.sort(
-        (a, b) => new Date(b.lastMessage?.createdAt) - new Date(a.lastMessage?.createdAt)
-    );
-
-    console.log(conversationsHaveMessage)
+    const recentlyFriendConversations = conversationsWithFriend.slice(0, quantity)
 
     return {
 		message: 'Lấy các conversation gần đây thành công',
-        data: conversationsHaveMessage.slice(0, quantity),
+        data: recentlyFriendConversations,
         status: 200
     };
 }
