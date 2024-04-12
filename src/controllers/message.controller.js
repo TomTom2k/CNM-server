@@ -33,7 +33,7 @@ const recallMessage = async (req, res, next) => {
 	try {
 		const data = await recallMessageService(req.params);
 
-		res.status(data.status).json({ message: data.message });
+		res.status(data.status).json({ message: data.message, updatedMessage: data.data });
 	} catch (error) {
 		next(error);
 	}

@@ -63,8 +63,8 @@ const sendMessageService = async (senderId, data, files) => {
         savedMessages.push(savedMessage)
 
         conversation.participantIds.forEach((participantId) => {
-            if (participantId !== senderId) {
-                const receiverSocketId = getReceiverSocketId(participantId);
+            if (participantId.participantId !== senderId) {
+                const receiverSocketId = getReceiverSocketId(participantId.participantId);
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit('newMessage', savedMessage);
                 }
@@ -114,8 +114,8 @@ const recallMessageService = async (data) => {
     }
 
     conversation.participantIds.forEach((participantId) => {
-        if (participantId !== updatedMessage.senderId) {
-            const receiverSocketId = getReceiverSocketId(participantId);
+        if (participantId.participantId !== updatedMessage.senderId) {
+            const receiverSocketId = getReceiverSocketId(participantId.participantId);
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit('recallMessage', updatedMessage);
             }
@@ -124,7 +124,8 @@ const recallMessageService = async (data) => {
 
     return {
         message: "Thu hồi tin nhắn thành công",
-        status: 200
+        status: 200,
+        data: updatedMessage
     };
 }
 
@@ -136,7 +137,6 @@ const deleteMessageForMeOnlyService = async (userId, data) => {
     const updatedMessage = await MessageModel.scan('messageId')
     .eq(messageId)
     .exec();
-    console.log(messageId, updatedMessage)
 
     return {
         message: "Xóa tin nhắn chỉ ở phía tôi thành công",
@@ -176,8 +176,8 @@ const shareMessageService = async (userId, data) => {
         sharedConversations.push(sharedConversation)
 
         conversation.participantIds.forEach((participantId) => {
-            if (participantId !== userId) {
-                const receiverSocketId = getReceiverSocketId(participantId);
+            if (participantId.participantId !== userId) {
+                const receiverSocketId = getReceiverSocketId(participantId.participantId);
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit('newMessage', savedMessage);
                 }

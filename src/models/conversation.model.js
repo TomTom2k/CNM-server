@@ -10,13 +10,22 @@ const ConversationSchema = new dynamoose.Schema(
 			default: () => uuidv4(),
 		},
 		name: String,
+		avatar: String,
 		participantIds: {
 			type: Array,
-			schema: [String],
+			schema: [
+				{
+					type: Object,
+					schema: {
+						participantId: String,
+						role: String
+					}
+				},
+			],
 		},
 	},
 	{
-		saveUnknown: true,
+		timestamps: true,
 	}
 );
 

@@ -2,11 +2,14 @@ const router = require('express').Router();
 const passport = require('passport');
 require('../middleware/passport');
 
+const upload = require('../middleware/upload');
+
 const {
 	getConversations,
 	createConversation,
 	getLastMessage,
-	getRecentlyConversations
+	getRecentlyConversations,
+	getRecentlyFriendConversations
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -17,6 +20,7 @@ router.get(
 router.post(
 	'/',
 	passport.authenticate('jwt', { session: false }),
+	upload.single('groupAvatar'),
 	createConversation
 );
 router.get(
@@ -28,6 +32,11 @@ router.get(
 	'/recently/:quantity',
 	passport.authenticate('jwt', { session: false }),
 	getRecentlyConversations
+);
+router.get(
+	'/recently-with-friend/:quantity',
+	passport.authenticate('jwt', { session: false }),
+	getRecentlyFriendConversations
 );
 
 module.exports = router;
