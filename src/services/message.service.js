@@ -69,11 +69,12 @@ const sendMessageService = async (senderId, data, files) => {
                 .eq(message.senderId)
                 .attributes([
                     'profilePic',
+                    'fullName'
                 ])
                 .exec();
                 const receiverSocketId = getReceiverSocketId(participantId.participantId);
                 if (receiverSocketId) {
-                    io.to(receiverSocketId).emit('newMessage', {...savedMessage, senderAvatar: senderInfo[0].profilePic});
+                    io.to(receiverSocketId).emit('newMessage', {...savedMessage, senderAvatar: senderInfo[0].profilePic, senderFullName: senderInfo[0].fullName});
                 }
             }
         };
@@ -87,40 +88,57 @@ const sendMessageService = async (senderId, data, files) => {
 }
 
 const getMessagesService = async (userID, data) => {
-    const { conversationId } = data;
-    let resMessages = []
-
-    // Lấy danh sách tin nhắn của cuộc trò chuyện
-    const messages = await MessageModel.query('conversationId')
-        .eq(conversationId)
-        .exec();
-    const messageArray = messages.map((message) => message.toJSON());
-
-    for(const message of messageArray){
-        if(message.senderId !== userID){
-            const senderInfo = await User.scan('userID')
-            .eq(message.senderId)
-            .attributes([
-                'profilePic',
-            ])
-            .exec();
+    try {
+        const { conversationId } = data;
+        let resMessages = []
     
-            resMessages.push({...message, senderAvatar: senderInfo[0].profilePic})
+        // Lấy danh sách tin nhắn của cuộc trò chuyện
+        const messages = await MessageModel.query('conversationId')
+            .eq(conversationId)
+            .exec();
+        const messageArray = messages.map((message) => message.toJSON());
+    
+        // Lấy danh sách senderIds
+        const senderIdsSet = new Set();
+        messageArray.forEach(message => {
+            if (message.senderId !== userID) {
+                senderIdsSet.add(message.senderId);
+            }
+        });
+        const senderIds = Array.from(senderIdsSet);
+    
+        if(senderIds.length > 0){
+            // Lấy thông tin của các sender
+            const sendersInfo = await User.batchGet(senderIds, {attributes: ['userID', 'profilePic', 'fullName']});
+            for(const message of messageArray){
+                if(message.senderId !== userID){
+                    const senderInfo = sendersInfo.find(info => info.userID === message.senderId);
+                    resMessages.push({...message, senderAvatar: senderInfo.profilePic, senderFullName: senderInfo.fullName})
+                }
+                else{
+                    resMessages.push(message)
+                }
+            }
+        } else {
+            resMessages = messageArray
         }
-        else{
-            resMessages.push(message)
-        }
+    
+        // Sắp xếp mảng tin nhắn theo createdAt
+        resMessages.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
+    
+        return {
+            data: resMessages,
+            status: 200
+        };
+    } catch (error) {
+        console.log(error)
+        return {
+            data: [],
+            status: 500
+        };
     }
-
-    // Sắp xếp mảng tin nhắn theo createdAt
-    resMessages.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-    );
-
-    return {
-        data: resMessages,
-        status: 200
-    };
 }
 
 const recallMessageService = async (data) => {
