@@ -37,9 +37,23 @@ const getConversationsService = async (senderId) => {
     
         // Kết hợp thông tin của thành viên vào mỗi cuộc trò chuyện
         const conversationsWithMembers = conversationsOfSender.map((conversation) => {
-            const membersInfo = conversation.participantIds.map(
+            let membersInfo = conversation.participantIds.map(
                 (participant) => membersMap[participant.participantId]
             );
+             // Sắp xếp membersInfo theo vai trò của participantId trong conversation.participantIds
+            membersInfo.sort((a, b) => {
+                let roleA = conversation.participantIds.find((participant) => participant.participantId === a.userID)?.role?.toLowerCase();
+                let roleB = conversation.participantIds.find((participant) => participant.participantId === b.userID)?.role?.toLowerCase();
+                // console.log({roleA, roleB})
+                if (roleA < roleB) {
+                    return 1;
+                }
+                if (roleA > roleB) {
+                    return -1;
+                }
+                return 0;
+            });
+
             return { ...conversation, membersInfo };
         });
     
