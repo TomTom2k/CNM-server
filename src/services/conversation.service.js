@@ -14,11 +14,11 @@ const getConversationsService = async (senderId) => {
     
         // Lọc các cuộc trò chuyện mà senderId tham gia
         const conversationsOfSender = conversations.filter((conversation) =>
-            conversation.participantIds.filter(participantId => participantId.isDeleted !== true).some(participant => participant.participantId === senderId)
+            conversation.participantIds.some(participant => participant.participantId === senderId)
         );
     
         const memberIds = conversationsOfSender.reduce((acc, conversation) => {
-            acc.push(...conversation.participantIds.filter(participantId => participantId.isDeleted !== true).map(participant => participant.participantId));
+            acc.push(...conversation.participantIds.map(participant => participant.participantId));
             return acc;
         }, []);
     
@@ -38,7 +38,7 @@ const getConversationsService = async (senderId) => {
     
         // Kết hợp thông tin của thành viên vào mỗi cuộc trò chuyện
         const conversationsWithMembers = conversationsOfSender.map((conversation) => {
-            let membersInfo = conversation.participantIds.filter(participantId => participantId.isDeleted !== true).map(
+            let membersInfo = conversation.participantIds.map(
                 (participant) => membersMap[participant.participantId]
             );
              // Sắp xếp membersInfo theo vai trò của participantId trong conversation.participantIds
@@ -295,17 +295,7 @@ const addMemberIntoGroupService = async (data) => {
         // Thêm các userIds vào cuộc trò chuyện
         userIds.userIds.forEach((userId) => {
             const user = existingConversation.participantIds.find(participantId => participantId.participantId === userId)
-            if(user){
-                if(user.isDeleted === true){
-                    existingConversation.participantIds = existingConversation.participantIds.filter(participantId => participantId.participantId !== userId)
-                    existingConversation.participantIds.push({
-                        participantId: user.participantId,
-                        role: 'member',
-                        isDeleted: false
-                    });
-                }
-            }
-            else{
+            if(!user){
                 existingConversation.participantIds.push({
                     participantId: userId,
                     role: 'member'
@@ -352,11 +342,9 @@ const removeUserIdInGroupService = async (data) => {
             };
         }
 
-         // Cập nhật trường isDeleted cho userId tương ứng
-         existingConversation.participantIds.forEach(participant => {
-            if (participant.participantId === userId.userId) {
-                participant.isDeleted = true;
-            }
+        // Lọc ra các participants không phải là userId.userId
+        existingConversation.participantIds = existingConversation.participantIds.filter(participant => {
+            return participant.participantId !== userId.userId;
         });
         
         // Lưu lại cuộc trò chuyện đã cập nhật

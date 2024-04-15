@@ -18,11 +18,7 @@ const ConversationSchema = new dynamoose.Schema(
 					type: Object,
 					schema: {
 						participantId: String,
-						role: String,
-						isDeleted:{
-							type:Boolean,
-							default:false
-						}
+						role: String
 					}
 				},
 			],
