@@ -14,11 +14,11 @@ const getConversationsService = async (senderId) => {
     
         // Lọc các cuộc trò chuyện mà senderId tham gia
         const conversationsOfSender = conversations.filter((conversation) =>
-            conversation.participantIds.some(participant => participant.participantId === senderId)
+            conversation.participantIds.filter(participantId => participantId.isDeleted !== true).some(participant => participant.participantId === senderId)
         );
     
         const memberIds = conversationsOfSender.reduce((acc, conversation) => {
-            acc.push(...conversation.participantIds.map(participant => participant.participantId));
+            acc.push(...conversation.participantIds.filter(participantId => participantId.isDeleted !== true).map(participant => participant.participantId));
             return acc;
         }, []);
     
@@ -38,7 +38,7 @@ const getConversationsService = async (senderId) => {
     
         // Kết hợp thông tin của thành viên vào mỗi cuộc trò chuyện
         const conversationsWithMembers = conversationsOfSender.map((conversation) => {
-            let membersInfo = conversation.participantIds.map(
+            let membersInfo = conversation.participantIds.filter(participantId => participantId.isDeleted !== true).map(
                 (participant) => membersMap[participant.participantId]
             );
              // Sắp xếp membersInfo theo vai trò của participantId trong conversation.participantIds
@@ -266,8 +266,7 @@ const addMemberIntoGroupService = async (data) => {
 
     try {
         // Kiểm tra xem cuộc trò chuyện có tồn tại không
-        const existingConversation = await ConversationModel.get(conversationId);
-        console.log(existingConversation)
+        let existingConversation = await ConversationModel.get(conversationId);
         if (!existingConversation) {
             return {
                 message: 'Cuộc trò chuyện không tồn tại',
@@ -295,18 +294,38 @@ const addMemberIntoGroupService = async (data) => {
 
         // Thêm các userIds vào cuộc trò chuyện
         userIds.userIds.forEach((userId) => {
-            existingConversation.participantIds.push({
-                participantId: userId,
-                role: 'member'
-            });
+            const user = existingConversation.participantIds.find(participantId => participantId.participantId === userId)
+            if(user){
+                if(user.isDeleted === true){
+                    existingConversation.participantIds = existingConversation.participantIds.filter(participantId => participantId.participantId !== userId)
+                    existingConversation.participantIds.push({
+                        participantId: user.participantId,
+                        role: 'member',
+                        isDeleted: false
+                    });
+                }
+            }
+            else{
+                existingConversation.participantIds.push({
+                    participantId: userId,
+                    role: 'member'
+                });
+            }
         });
 
         // Lưu lại cuộc trò chuyện với các participant mới
         await existingConversation.save();
+        const members = await User.batchGet(userIds.userIds, {
+            attributes: ['userID', 'fullName', 'profilePic'],
+        });
+        const addedParticipantIds = existingConversation.participantIds.filter(participantId => userIds.userIds.includes(participantId.participantId))
+
+        const resData = {membersInfo : members, addedParticipantIds: addedParticipantIds}
+
         return {
             message: 'Thêm thành viên vào nhóm thành công',
             status: 200,
-            data:  existingConversation.participantIds.map(participant => participant.participantId)
+            data:  resData
         };
 
     } catch (error) {
@@ -343,14 +362,10 @@ const removeUserIdInGroupService = async (data) => {
         // Lưu lại cuộc trò chuyện đã cập nhật
         await existingConversation.save(); // Giả sử phương thức save() của ConversationModel đã được định nghĩa
 
-        //Lấy thông tin của thành viên đã xóa
-        const userInfoRemoved = await userService.getUserById(userId.userId)
-        console.log(userInfoRemoved)
-
         return {
             message: 'Đã xóa thành viên thành công',
             status: 200,
-            data: userInfoRemoved
+            data: userId.userId
         };
 
     } catch (error) {
