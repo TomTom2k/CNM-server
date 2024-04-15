@@ -5,7 +5,8 @@ const {
 	getRecentlyConversationsService, 
 	getRecentlyFriendConversationsService,
 	addMemberIntoGroupService,
-	removeUserIdInGroupService
+	removeUserIdInGroupService,
+	deleteConversationService
 } = require("../services/conversation.service")
 
 
@@ -110,10 +111,23 @@ const removeUserIdInGroup = async (req, res, next) => {
 			message: data.message,
 			userInfoRemoved: data.data,
 		});
+	}
+	catch (error) {
+		next(error);
+	}
+}
+
+const deleteConversation = async (req, res, next) => {
+	try {
+		const data = await deleteConversationService(req.user.userID, req.params)
+
+		res.status(data.status).json({
+			message: data.message,
+			conversation: data.data,
+		});
 	} catch (error) {
 		next(error);
 	}
-
 }
 
 module.exports = {
@@ -123,5 +137,6 @@ module.exports = {
 	getRecentlyConversations,
 	getRecentlyFriendConversations,
 	addMemberIntoGroup,
-	removeUserIdInGroup
+	removeUserIdInGroup,
+	deleteConversation
 };

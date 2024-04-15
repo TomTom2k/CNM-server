@@ -11,7 +11,8 @@ const {
 	getRecentlyConversations,
 	getRecentlyFriendConversations,
 	addMemberIntoGroup,
-	removeUserIdInGroup
+	removeUserIdInGroup,
+	deleteConversation
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -49,6 +50,11 @@ router.post(
 	'/:conversationId/remove-member',
 	passport.authenticate('jwt', { session: false }),
 	removeUserIdInGroup
+);
+router.delete(
+	'/:conversationId',
+	passport.authenticate('jwt', { session: false }),
+	deleteConversation
 );
 
 module.exports = router;
