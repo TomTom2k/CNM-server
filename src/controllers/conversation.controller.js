@@ -87,7 +87,7 @@ const addMemberIntoGroup = async (req, res, next) => {
 	
         res.status(data.status).json({
             message: data.message,
-            participantId: data.data,
+            resData: data.data,
         });
     } catch (error) {
 		next(error);
@@ -109,7 +109,7 @@ const removeUserIdInGroup = async (req, res, next) => {
 	
 		res.status(data.status).json({
 			message: data.message,
-			userInfoRemoved: data.data,
+			RemovedUserId: data.data,
 		});
 	}
 	catch (error) {
