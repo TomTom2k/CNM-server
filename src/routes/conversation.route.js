@@ -10,6 +10,8 @@ const {
 	getLastMessage,
 	getRecentlyConversations,
 	getRecentlyFriendConversations,
+	addMemberIntoGroup,
+	removeUserIdInGroup,
 	deleteConversation
 } = require('../controllers/conversation.controller');
 
@@ -38,6 +40,16 @@ router.get(
 	'/recently-with-friend/:quantity',
 	passport.authenticate('jwt', { session: false }),
 	getRecentlyFriendConversations
+);
+router.post(
+	'/:conversationId/add-member',
+	passport.authenticate('jwt', { session: false }),
+	addMemberIntoGroup
+);
+router.post(
+	'/:conversationId/remove-member',
+	passport.authenticate('jwt', { session: false }),
+	removeUserIdInGroup
 );
 router.delete(
 	'/:conversationId',

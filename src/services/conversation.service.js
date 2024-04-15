@@ -5,6 +5,7 @@ const MessageModel = require('../models/message.model');
 const User = require('../models/user.model');
 const checkUserId = require('../utils/checkUserId');
 const { s3 } = require("../configs/aws.config")
+const userService = require("./user.service")
 
 const getConversationsService = async (senderId) => {
     try {
@@ -259,6 +260,109 @@ const getRecentlyFriendConversationsService = async (userID, data) => {
     };
 }
 
+const addMemberIntoGroupService = async (data) => {
+    const { conversationId, userIds } = data;
+    // console.log(userIds.userIds)
+
+    try {
+        // Kiểm tra xem cuộc trò chuyện có tồn tại không
+        const existingConversation = await ConversationModel.get(conversationId);
+        console.log(existingConversation)
+        if (!existingConversation) {
+            return {
+                message: 'Cuộc trò chuyện không tồn tại',
+                status: 404,
+                data: {}
+            };
+        }
+
+        // Kiểm tra xem các userIds có hợp lệ không
+        const isValidParticipants = await Promise.all(
+            userIds.userIds.map(async (id) => {
+                const isValid = await checkUserId(id);
+                return isValid;
+            })
+        );
+
+        // Nếu có bất kỳ id nào không hợp lệ, trả về lỗi
+        if (isValidParticipants.includes(false)) {
+            return {
+                message: 'Tồn tại người dùng không hợp lệ',
+                status: 400,
+                data: {}
+            };
+        }
+
+        // Thêm các userIds vào cuộc trò chuyện
+        userIds.userIds.forEach((userId) => {
+            existingConversation.participantIds.push({
+                participantId: userId,
+                role: 'member'
+            });
+        });
+
+        // Lưu lại cuộc trò chuyện với các participant mới
+        await existingConversation.save();
+        return {
+            message: 'Thêm thành viên vào nhóm thành công',
+            status: 200,
+            data:  existingConversation.participantIds.map(participant => participant.participantId)
+        };
+
+    } catch (error) {
+        console.log(error);
+        return {
+            message: 'Có lỗi xảy ra khi thêm thành viên vào nhóm',
+            status: 500,
+            data: {}
+        };
+    }
+}
+
+const removeUserIdInGroupService = async (data) => {
+    const { conversationId, userId } = data;
+
+    try {
+        // Lấy thông tin cuộc trò chuyện
+        const existingConversation = await ConversationModel.get(conversationId);
+        if (!existingConversation) {
+            return {
+                message: 'Cuộc trò chuyện không tồn tại',
+                status: 404,
+                data: {}
+            };
+        }
+
+         // Cập nhật trường isDeleted cho userId tương ứng
+         existingConversation.participantIds.forEach(participant => {
+            if (participant.participantId === userId.userId) {
+                participant.isDeleted = true;
+            }
+        });
+        
+        // Lưu lại cuộc trò chuyện đã cập nhật
+        await existingConversation.save(); // Giả sử phương thức save() của ConversationModel đã được định nghĩa
+
+        //Lấy thông tin của thành viên đã xóa
+        const userInfoRemoved = await userService.getUserById(userId.userId)
+        console.log(userInfoRemoved)
+
+        return {
+            message: 'Đã xóa thành viên thành công',
+            status: 200,
+            data: userInfoRemoved
+        };
+
+    } catch (error) {
+        console.log(error);
+        return {
+            message: 'Có lỗi xảy ra khi cập nhật thành viên đã xóa',
+            status: 500,
+            data: {}
+        };
+    }
+}
+
 const deleteConversationService = async (userID, data) => {
     try {
         const {conversationId} = data
@@ -322,11 +426,14 @@ const deleteConversationService = async (userID, data) => {
     }
 }
 
+
 module.exports = {
     getConversationsService,
     createConversationService,
 	getLastMessageService,
     getRecentlyConversationsService,
     getRecentlyFriendConversationsService,
+    addMemberIntoGroupService,
+    removeUserIdInGroupService,
     deleteConversationService
 }
