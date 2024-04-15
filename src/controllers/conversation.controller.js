@@ -3,7 +3,8 @@ const {
 	createConversationService, 
 	getLastMessageService, 
 	getRecentlyConversationsService, 
-	getRecentlyFriendConversationsService 
+	getRecentlyFriendConversationsService,
+	deleteConversationService
 } = require("../services/conversation.service")
 
 
@@ -69,10 +70,24 @@ const getRecentlyFriendConversations = async (req, res, next) => {
 	}
 };
 
+const deleteConversation = async (req, res, next) => {
+	try {
+		const data = await deleteConversationService(req.user.userID, req.params)
+
+		res.status(data.status).json({
+			message: data.message,
+			conversation: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	getConversations,
 	createConversation,
 	getLastMessage,
 	getRecentlyConversations,
-	getRecentlyFriendConversations
+	getRecentlyFriendConversations,
+	deleteConversation
 };

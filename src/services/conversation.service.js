@@ -93,22 +93,24 @@ const createConversationService = async (userID, data, avatar) => {
     }
 
     // Kiểm tra xem cuộc trò chuyện đã tồn tại giữa các participantIds
-    const existingConversation = await ConversationModel.scan().exec();
-
-    const matchingConversations = existingConversation.filter(
-        (conversation) => {
-            return participantIds.every((id) =>
-                conversation.participantIds.some(participant => participant.participantId === id)
-            );
+    if(participantIds.length === 2) {
+        const existingConversation = await ConversationModel.scan().exec();
+    
+        const matchingConversations = existingConversation.filter(
+            (conversation) => {
+                return participantIds.every((id) =>
+                    conversation.participantIds.some(participant => participant.participantId === id)
+                );
+            }
+        );
+    
+        if (matchingConversations.length > 0) {
+            return {
+                message: 'Cuộc trò chuyện đã tồn tại',
+                status: 200,
+                data: matchingConversations[0],
+            };
         }
-    );
-
-    if (matchingConversations.length > 0) {
-        return {
-            message: 'Cuộc trò chuyện đã tồn tại',
-            status: 200,
-            data: matchingConversations[0],
-        };
     }
 
     // Kiểm tra xem tất cả các id trong participantIds có hợp lệ không
@@ -257,10 +259,74 @@ const getRecentlyFriendConversationsService = async (userID, data) => {
     };
 }
 
+const deleteConversationService = async (userID, data) => {
+    try {
+        const {conversationId} = data
+    
+        const conversation = await ConversationModel.query('conversationId')
+        .eq(conversationId)
+        .exec();
+
+        if (conversation.length === 0) {
+            return {
+                message: "Conversation not found",
+                data: null,
+                status: 404
+            };
+        }
+    
+        const owner = conversation[0].participantIds?.find(participantId => participantId?.role === "owner")
+    
+        if(userID !== owner.participantId) {
+            return {
+                message: "You don't have permission",
+                data: null,
+                status: 403
+            };
+        }
+
+        try {
+            const messagesOfConversation = await MessageModel.query('conversationId')
+            .eq(conversationId)
+            .exec();
+            
+            const messageIdsOfConversation = messagesOfConversation.map(message => {
+                return {messageId: message.messageId}
+            })
+
+            await MessageModel.batchDelete(messageIdsOfConversation)
+            await ConversationModel.delete({"conversationId" : conversationId})
+            console.log("Successfully deleted item");
+        } catch (error) {
+            console.error(error);
+            return {
+                message: 'Something is error',
+                data: null,
+                status: 500
+            };
+        }
+    
+        return {
+            message: 'xóa conversation thành công',
+            data: conversationId,
+            status: 200
+        };
+        
+    } catch (error) {
+        console.log(error)
+        return {
+            message: 'Something is error',
+            data: null,
+            status: 500
+        };
+    }
+}
+
 module.exports = {
     getConversationsService,
     createConversationService,
 	getLastMessageService,
     getRecentlyConversationsService,
-    getRecentlyFriendConversationsService
+    getRecentlyFriendConversationsService,
+    deleteConversationService
 }

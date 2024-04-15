@@ -9,7 +9,8 @@ const {
 	createConversation,
 	getLastMessage,
 	getRecentlyConversations,
-	getRecentlyFriendConversations
+	getRecentlyFriendConversations,
+	deleteConversation
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -37,6 +38,11 @@ router.get(
 	'/recently-with-friend/:quantity',
 	passport.authenticate('jwt', { session: false }),
 	getRecentlyFriendConversations
+);
+router.delete(
+	'/:conversationId',
+	passport.authenticate('jwt', { session: false }),
+	deleteConversation
 );
 
 module.exports = router;
