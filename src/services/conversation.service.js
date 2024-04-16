@@ -6,6 +6,7 @@ const User = require('../models/user.model');
 const checkUserId = require('../utils/checkUserId');
 const { s3 } = require("../configs/aws.config")
 const userService = require("./user.service")
+const { io, getReceiverSocketId } = require('../socket/socket');
 
 const getConversationsService = async (senderId) => {
     try {
@@ -166,6 +167,15 @@ const createConversationService = async (userID, data, avatar) => {
         participantIds: conversationParticipants, // Thay đổi ở đây để truy cập vào trường participantId trong mỗi object
     });
     conversation = await conversation.save();
+
+    for(const participantId of conversation.participantIds) {
+        if (participantId.participantId !== userID) {
+            const receiverSocketId = getReceiverSocketId(participantId.participantId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('newConversation', conversation);
+            }
+        }
+    }
 
     return {
         message: 'Tạo cuộc hội thoại thành công',
@@ -401,7 +411,9 @@ const deleteConversationService = async (userID, data) => {
                 return {messageId: message.messageId}
             })
 
-            await MessageModel.batchDelete(messageIdsOfConversation)
+            if(messageIdsOfConversation.length > 0){
+                await MessageModel.batchDelete(messageIdsOfConversation)
+            }
             await ConversationModel.delete({"conversationId" : conversationId})
             console.log("Successfully deleted item");
         } catch (error) {
@@ -411,6 +423,15 @@ const deleteConversationService = async (userID, data) => {
                 data: null,
                 status: 500
             };
+        }
+
+        for(const participantId of conversation[0].participantIds) {
+            if (participantId.participantId !== userID) {
+                const receiverSocketId = getReceiverSocketId(participantId.participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('deleteConversation', conversationId);
+                }
+            }
         }
     
         return {
