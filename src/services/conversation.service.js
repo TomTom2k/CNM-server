@@ -361,7 +361,7 @@ const addMemberIntoGroupService = async (userID, data) => {
     }
 }
 
-const removeUserIdInGroupService = async (data) => {
+const removeUserIdInGroupService = async (userID, data) => {
     const { conversationId, userId } = data;
 
     try {
@@ -379,14 +379,34 @@ const removeUserIdInGroupService = async (data) => {
         existingConversation.participantIds = existingConversation.participantIds.filter(participant => {
             return participant.participantId !== userId.userId;
         });
+
+        const message = new MessageModel({
+            senderId: userId.userId,
+            conversationId: conversationId.conversationId,
+            content: "đã được xóa khỏi nhóm",
+            type: "notification"
+        })
+
+        const savedMessage = await message.save()
         
         // Lưu lại cuộc trò chuyện đã cập nhật
         await existingConversation.save(); // Giả sử phương thức save() của ConversationModel đã được định nghĩa
 
+        const resData = { RemovedUserId: userId.userId, savedMessage}
+
+        for(const participantId of existingConversation.participantIds) {
+            if (participantId.participantId !== userID) {
+                const receiverSocketId = getReceiverSocketId(participantId.participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('removeMemberOutOfConversation', {...resData, conversationId: conversationId.conversationId});
+                }
+            }
+        }
+
         return {
             message: 'Đã xóa thành viên thành công',
             status: 200,
-            data: userId.userId
+            data: resData
         };
 
     } catch (error) {

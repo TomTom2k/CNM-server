@@ -101,11 +101,11 @@ const removeUserIdInGroup = async (req, res, next) => {
 			userId: req.body,
 		}
 		
-		const data = await removeUserIdInGroupService(params);
+		const data = await removeUserIdInGroupService(req.user.userID, params);
 	
 		res.status(data.status).json({
 			message: data.message,
-			RemovedUserId: data.data,
+			resData: data.data,
 		});
 	}
 	catch (error) {
