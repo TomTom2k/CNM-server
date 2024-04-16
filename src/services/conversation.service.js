@@ -270,9 +270,11 @@ const getRecentlyFriendConversationsService = async (userID, data) => {
     };
 }
 
-const addMemberIntoGroupService = async (data) => {
+const addMemberIntoGroupService = async (userID, data) => {
     const { conversationId, userIds } = data;
     // console.log(userIds.userIds)
+    let messages = []
+    let savedMessages = []
 
     try {
         // Kiểm tra xem cuộc trò chuyện có tồn tại không
@@ -310,24 +312,45 @@ const addMemberIntoGroupService = async (data) => {
                     participantId: userId,
                     role: 'member'
                 });
+
+                messages.push(new MessageModel({
+                    senderId: userId,
+                    conversationId: conversationId.conversationId,
+                    content: "đã được thêm vào nhóm",
+                    type: "notification"
+                }))
             }
         });
 
         // Lưu lại cuộc trò chuyện với các participant mới
         await existingConversation.save();
+
+        for(const message of messages) {
+            const savedMessage = await message.save();
+            savedMessages.push(savedMessage)
+        }
+
         const members = await User.batchGet(userIds.userIds, {
             attributes: ['userID', 'fullName', 'profilePic'],
         });
         const addedParticipantIds = existingConversation.participantIds.filter(participantId => userIds.userIds.includes(participantId.participantId))
 
-        const resData = {membersInfo : members, addedParticipantIds: addedParticipantIds}
+        const resData = {membersInfo : members, addedParticipantIds: addedParticipantIds, messages: savedMessages}
+
+        for(const participantId of existingConversation.participantIds) {
+            if (participantId.participantId !== userID) {
+                const receiverSocketId = getReceiverSocketId(participantId.participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('addMemberIntoConversation', {...resData, conversationId: conversationId.conversationId});
+                }
+            }
+        }
 
         return {
             message: 'Thêm thành viên vào nhóm thành công',
             status: 200,
             data:  resData
         };
-
     } catch (error) {
         console.log(error);
         return {

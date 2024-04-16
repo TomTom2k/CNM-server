@@ -82,7 +82,7 @@ const addMemberIntoGroup = async (req, res, next) => {
 			userIds: req.body,
 		}
 		console.log("Params", params)
-        const data = await addMemberIntoGroupService(params);
+        const data = await addMemberIntoGroupService(req.user.userID, params);
 	
         res.status(data.status).json({
             message: data.message,
