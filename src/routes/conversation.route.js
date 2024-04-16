@@ -13,7 +13,8 @@ const {
 	addMemberIntoGroup,
 	removeUserIdInGroup,
 	deleteConversation,
-	chanceRoleOwner
+	chanceRoleOwner,
+	leaveGroup
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -61,6 +62,11 @@ router.post(
 	'/:conversationId/change-role-owner',
 	passport.authenticate('jwt', { session: false }),
 	chanceRoleOwner
+);
+router.post(
+	'/:conversationId/leave-group',
+	passport.authenticate('jwt', { session: false }),
+	leaveGroup
 );
 
 module.exports = router;

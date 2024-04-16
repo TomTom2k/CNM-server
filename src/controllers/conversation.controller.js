@@ -7,7 +7,8 @@ const {
 	addMemberIntoGroupService,
 	removeUserIdInGroupService,
 	deleteConversationService,
-	chanceRoleOwnerService
+	chanceRoleOwnerService,
+	leaveGroupService
 } = require("../services/conversation.service")
 
 
@@ -74,9 +75,6 @@ const getRecentlyFriendConversations = async (req, res, next) => {
 };
 
 const addMemberIntoGroup = async (req, res, next) => {
-	console.log("Controller Called")
-	console.log(req.params)
-	console.log(req.body)
 	 
 	try {
 		const params = {
@@ -145,6 +143,24 @@ const chanceRoleOwner = async (req, res, next) => {
 	}
 }
 
+const leaveGroup = async (req, res, next) => {
+	try {
+		const params = {
+			conversationId: req.params,
+			userId: req.body
+		}
+		const data = await leaveGroupService(params)
+
+		res.status(data.status).json({
+			message: data.message,
+			userID: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+
+}
+
 module.exports = {
 	getConversations,
 	createConversation,
@@ -154,5 +170,6 @@ module.exports = {
 	addMemberIntoGroup,
 	removeUserIdInGroup,
 	deleteConversation,
-	chanceRoleOwner
+	chanceRoleOwner,
+	leaveGroup
 };
