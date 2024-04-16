@@ -138,7 +138,7 @@ const chanceRoleOwner = async (req, res, next) => {
 
 		res.status(data.status).json({
 			message: data.message,
-			participantIds: data.data,
+			resData: data.data,
 		});
 	} catch (error) {
 		next(error);
