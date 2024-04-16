@@ -429,6 +429,49 @@ const deleteConversationService = async (userID, data) => {
     }
 }
 
+const chanceRoleOwnerService = async (data) => {
+    const { conversationId, userId } = data;
+    try {
+        // Lấy thông tin cuộc trò chuyện
+        const existingConversation = await ConversationModel.get(conversationId);
+    
+        if (!existingConversation) {
+            return {
+                message: 'Cuộc trò chuyện không tồn tại',
+                status: 404,
+                data: {}
+            };
+        }
+
+        // Lọc ra các participants không phải là userId.userId
+        existingConversation.participantIds = existingConversation.participantIds.map(participant => {
+            if(participant.participantId === userId.userId){
+                participant.role = "owner"
+            } else {
+                participant.role = "member"
+            }
+            return participant
+        });
+        
+        // Lưu lại cuộc trò chuyện đã cập nhật
+        await existingConversation.save(); 
+
+        return {
+            message: 'Đã thay đổi vai trò thành công',
+            status: 200,
+            data: existingConversation.participantIds
+            
+        };
+
+    } catch (error) {
+        console.log(error);
+        return {
+            message: 'Có lỗi xảy ra khi cập nhật thành viên đã xóa',
+            status: 500,
+            data: {}
+        };
+    }
+}
 
 module.exports = {
     getConversationsService,
@@ -438,5 +481,6 @@ module.exports = {
     getRecentlyFriendConversationsService,
     addMemberIntoGroupService,
     removeUserIdInGroupService,
-    deleteConversationService
+    deleteConversationService,
+    chanceRoleOwnerService
 }

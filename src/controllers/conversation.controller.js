@@ -6,7 +6,8 @@ const {
 	getRecentlyFriendConversationsService,
 	addMemberIntoGroupService,
 	removeUserIdInGroupService,
-	deleteConversationService
+	deleteConversationService,
+	chanceRoleOwnerService
 } = require("../services/conversation.service")
 
 
@@ -95,16 +96,13 @@ const addMemberIntoGroup = async (req, res, next) => {
 }
 
 const removeUserIdInGroup = async (req, res, next) => {
-	console.log("Controller Called")
-	console.log(req.params)
-	console.log(req.body)
 	 
 	try {
 		const params = {
 			conversationId: req.params,
 			userId: req.body,
 		}
-		console.log("Params", params)
+		
 		const data = await removeUserIdInGroupService(params);
 	
 		res.status(data.status).json({
@@ -130,6 +128,23 @@ const deleteConversation = async (req, res, next) => {
 	}
 }
 
+const chanceRoleOwner = async (req, res, next) => {
+	try {
+		const params = {
+			conversationId: req.params,
+			userId: req.body,
+		}
+		const data = await chanceRoleOwnerService(params)
+
+		res.status(data.status).json({
+			message: data.message,
+			participantIds: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+}
+
 module.exports = {
 	getConversations,
 	createConversation,
@@ -138,5 +153,6 @@ module.exports = {
 	getRecentlyFriendConversations,
 	addMemberIntoGroup,
 	removeUserIdInGroup,
-	deleteConversation
+	deleteConversation,
+	chanceRoleOwner
 };
