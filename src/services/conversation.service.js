@@ -493,7 +493,7 @@ const chanceRoleOwnerService = async (data) => {
 }
 
 const leaveGroupService = async (data) => {
-    const { conversationId, userId } = data;
+    const { conversationId, reqData } = data;
    
     try{
         const existingConversation = await ConversationModel.get(conversationId);
@@ -504,9 +504,17 @@ const leaveGroupService = async (data) => {
                 data: {}
             };
         }
+
+        if(reqData.choseOwner){
+            existingConversation.participantIds.forEach(participantId => {
+                if(participantId.participantId === reqData.choseOwner){
+                    participantId.role = "owner"
+                }
+            })
+        }
     
         existingConversation.participantIds = existingConversation.participantIds.filter(participant => {
-            return participant.participantId !== userId.userId;
+            return participant.participantId !== reqData.userId;
         });
 
         await existingConversation.save(); 
@@ -514,7 +522,7 @@ const leaveGroupService = async (data) => {
         return {
             message: 'Đã rời nhóm thành công',
             status: 200,
-            data: userId.userId
+            data: existingConversation.conversationId
         };
     }catch(error){
         console.log(error);

@@ -147,13 +147,13 @@ const leaveGroup = async (req, res, next) => {
 	try {
 		const params = {
 			conversationId: req.params,
-			userId: req.body
+			reqData: req.body
 		}
 		const data = await leaveGroupService(params)
 
 		res.status(data.status).json({
 			message: data.message,
-			userID: data.data,
+			conversationId: data.data,
 		});
 	} catch (error) {
 		next(error);
