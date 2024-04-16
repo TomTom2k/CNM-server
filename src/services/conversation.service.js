@@ -473,6 +473,40 @@ const chanceRoleOwnerService = async (data) => {
     }
 }
 
+const leaveGroupService = async (data) => {
+    const { conversationId, userId } = data;
+   
+    try{
+        const existingConversation = await ConversationModel.get(conversationId);
+        if (!existingConversation) {
+            return {
+                message: 'Cuộc trò chuyện không tồn tại',
+                status: 404,
+                data: {}
+            };
+        }
+    
+        existingConversation.participantIds = existingConversation.participantIds.filter(participant => {
+            return participant.participantId !== userId.userId;
+        });
+
+        await existingConversation.save(); 
+      
+        return {
+            message: 'Đã rời nhóm thành công',
+            status: 200,
+            data: userId.userId
+        };
+    }catch(error){
+        console.log(error);
+        return {
+            message: 'Có lỗi xảy ra khi rời nhóm',
+            status: 500,
+            data: {}
+        };
+    }
+}
+
 module.exports = {
     getConversationsService,
     createConversationService,
@@ -482,5 +516,6 @@ module.exports = {
     addMemberIntoGroupService,
     removeUserIdInGroupService,
     deleteConversationService,
-    chanceRoleOwnerService
+    chanceRoleOwnerService,
+    leaveGroupService
 }
