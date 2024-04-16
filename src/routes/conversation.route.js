@@ -12,7 +12,8 @@ const {
 	getRecentlyFriendConversations,
 	addMemberIntoGroup,
 	removeUserIdInGroup,
-	deleteConversation
+	deleteConversation,
+	chanceRoleOwner
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -55,6 +56,11 @@ router.delete(
 	'/:conversationId',
 	passport.authenticate('jwt', { session: false }),
 	deleteConversation
+);
+router.post(
+	'/:conversationId/change-role-owner',
+	passport.authenticate('jwt', { session: false }),
+	chanceRoleOwner
 );
 
 module.exports = router;
