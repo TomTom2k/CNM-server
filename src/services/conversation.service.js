@@ -456,10 +456,29 @@ const chanceRoleOwnerService = async (data) => {
         // Lưu lại cuộc trò chuyện đã cập nhật
         await existingConversation.save(); 
 
+        const participantIds = existingConversation.participantIds.map(participantId => participantId.participantId)
+        const members = await User.batchGet(participantIds, {
+            attributes: ['userID', 'fullName', 'profilePic'],
+        });
+        members.sort((a, b) => {
+            let roleA = existingConversation.participantIds.find((participant) => participant.participantId === a.userID)?.role?.toLowerCase();
+            let roleB = existingConversation.participantIds.find((participant) => participant.participantId === b.userID)?.role?.toLowerCase();
+            // console.log({roleA, roleB})
+            if (roleA < roleB) {
+                return 1;
+            }
+            if (roleA > roleB) {
+                return -1;
+            }
+            return 0;
+        });
+
+        const resData = {membersInfo: members, participantIds: existingConversation.participantIds}
+
         return {
             message: 'Đã thay đổi vai trò thành công',
             status: 200,
-            data: existingConversation.participantIds
+            data: resData
             
         };
 
