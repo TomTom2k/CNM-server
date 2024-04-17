@@ -493,7 +493,7 @@ const deleteConversationService = async (userID, data) => {
     }
 }
 
-const chanceRoleOwnerService = async (data) => {
+const chanceRoleOwnerService = async (userID, data) => {
     const { conversationId, userId } = data;
     try {
         // Lấy thông tin cuộc trò chuyện
@@ -516,6 +516,15 @@ const chanceRoleOwnerService = async (data) => {
             }
             return participant
         });
+
+        const message = new MessageModel({
+            senderId: userId.userId,
+            conversationId: conversationId.conversationId,
+            content: "đã được chuyển quyền trưởng nhóm",
+            type: "notification"
+        })
+
+        const savedMessage = await message.save()
         
         // Lưu lại cuộc trò chuyện đã cập nhật
         await existingConversation.save(); 
@@ -537,7 +546,16 @@ const chanceRoleOwnerService = async (data) => {
             return 0;
         });
 
-        const resData = {membersInfo: members, participantIds: existingConversation.participantIds}
+        const resData = {membersInfo: members, participantIds: existingConversation.participantIds, savedMessage}
+
+        for(const participantId of existingConversation.participantIds) {
+            if (participantId.participantId !== userID) {
+                const receiverSocketId = getReceiverSocketId(participantId.participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('changeOwnerOfConversation', {...resData, conversationId: conversationId.conversationId});
+                }
+            }
+        }
 
         return {
             message: 'Đã thay đổi vai trò thành công',
