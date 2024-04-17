@@ -132,7 +132,7 @@ const chanceRoleOwner = async (req, res, next) => {
 			conversationId: req.params,
 			userId: req.body,
 		}
-		const data = await chanceRoleOwnerService(params)
+		const data = await chanceRoleOwnerService(req.user.userID, params)
 
 		res.status(data.status).json({
 			message: data.message,
