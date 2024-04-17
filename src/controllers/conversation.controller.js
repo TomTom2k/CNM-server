@@ -149,7 +149,7 @@ const leaveGroup = async (req, res, next) => {
 			conversationId: req.params,
 			reqData: req.body
 		}
-		const data = await leaveGroupService(params)
+		const data = await leaveGroupService(req.user.userID, params)
 
 		res.status(data.status).json({
 			message: data.message,
