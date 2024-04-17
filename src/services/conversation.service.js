@@ -625,7 +625,24 @@ const leaveGroupService = async (userID, data) => {
 
         await existingConversation.save(); 
 
-        const resData = {conversationId: existingConversation.conversationId, savedMessages, leftUserID: reqData.userId, updatedParticipantIds: existingConversation.participantIds}
+        const participantIds = existingConversation.participantIds.map(participantId => participantId.participantId)
+        const members = await User.batchGet(participantIds, {
+            attributes: ['userID', 'fullName', 'profilePic'],
+        });
+        members.sort((a, b) => {
+            let roleA = existingConversation.participantIds.find((participant) => participant.participantId === a.userID)?.role?.toLowerCase();
+            let roleB = existingConversation.participantIds.find((participant) => participant.participantId === b.userID)?.role?.toLowerCase();
+            // console.log({roleA, roleB})
+            if (roleA < roleB) {
+                return 1;
+            }
+            if (roleA > roleB) {
+                return -1;
+            }
+            return 0;
+        });
+
+        const resData = {membersInfo: members, conversationId: existingConversation.conversationId, savedMessages, leftUserID: reqData.userId, updatedParticipantIds: existingConversation.participantIds}
 
         for(const participantId of existingConversation.participantIds) {
             if (participantId.participantId !== userID) {
