@@ -17,6 +17,7 @@ const {
 	inFoUser,
 	findUserById,
 	cancelFriend,
+	cancelRequestAddFriends,
 	deleteFriend,
 	getAllFriendsWithConversationId
 } = require('../controllers/user.controller');
@@ -83,6 +84,12 @@ router.put(
 	passport.authenticate('jwt', { session: false }),
 	cancelFriend
 );
+
+router.put(
+	'/cancel-request-add-friend',
+	passport.authenticate('jwt', { session: false }),
+	cancelRequestAddFriends
+)
 
 router.put(
 	'/delete-friend',

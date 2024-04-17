@@ -370,6 +370,39 @@ const cancelAddFriends = async (data) => {
     }
 }
 
+const cancelRequestAddFriendsService = async (data) =>{
+    console.log("Server called")
+    try {
+        const { userId, userRequestedId } = data;
+        console.log(data)
+    
+        const currentUser = await UserModel.get(userId);   
+        const listRequestAddFriendsReceived = currentUser.listRequestAddFriendsReceived || [];
+        const updatedListRequestAddFriendsReceived = listRequestAddFriendsReceived.filter((id) => id !== userRequestedId);
+        await UserModel.update({ userID: userId }, { listRequestAddFriendsReceived: updatedListRequestAddFriendsReceived });
+
+        const userRequested = await UserModel.get(userRequestedId);
+        const listRequestAddFriendsSent = userRequested.listRequestAddFriendsSent || [];
+        const updatedListRequestAddFriendsSent = listRequestAddFriendsSent.filter((id) => id !== userId);
+        await UserModel.update({ userID: userRequestedId }, { listRequestAddFriendsSent: updatedListRequestAddFriendsSent });
+      
+        return {
+            message: 'Từ chối lời mời yêu cầu kết bạn thành công',
+            status: 200,
+            data: {},
+        };
+    } catch (error) {
+        console.error('Error canceling friend request:', error);
+        return {
+            message: 'Có lỗi xảy ra khi hủy lời mời kết bạn',
+            status: 500,
+            data: {},
+        };  
+    }
+
+     
+}
+
 const deleteFriendService = async (data) => {
     const { userId, friendId } = data;
 
@@ -474,5 +507,6 @@ module.exports = {
     getUserById,
     cancelAddFriends,
     deleteFriendService,
+    cancelRequestAddFriendsService,
     getAllFriendsWithConversationIdService
 }

@@ -11,6 +11,7 @@ const {
 	getAllInFoUser,
 	getUserById,
 	cancelAddFriends,
+	cancelRequestAddFriendsService,
 	deleteFriendService,
 	getAllFriendsWithConversationIdService
 } = require("../services/user.service")
@@ -173,6 +174,24 @@ const cancelFriend = async (req, res, next) => {
 	}
 }
 
+const cancelRequestAddFriends = async (req, res, next) =>{
+	try {
+		const params = {
+			userId: req.user.userID,
+			userRequestedId: req.body.userRequestedId,
+		}
+		
+		const data = await cancelRequestAddFriendsService(params)
+
+		return res.status(data.status).json({
+			message: data.message,
+			updatedUser: data.data,
+		})
+	} catch (error) {
+		next(error)
+	}
+}
+
 const deleteFriend = async (req, res, next) => {
 	try {
 		const params = {
@@ -216,6 +235,7 @@ module.exports = {
 	inFoUser,
 	findUserById,
 	cancelFriend,
+	cancelRequestAddFriends,
 	deleteFriend,
 	getAllFriendsWithConversationId
 };
