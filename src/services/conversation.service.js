@@ -375,6 +375,8 @@ const removeUserIdInGroupService = async (userID, data) => {
             };
         }
 
+        const participantIdsBeforeRemoving = existingConversation.participantIds
+
         // Lọc ra các participants không phải là userId.userId
         existingConversation.participantIds = existingConversation.participantIds.filter(participant => {
             return participant.participantId !== userId.userId;
@@ -394,7 +396,7 @@ const removeUserIdInGroupService = async (userID, data) => {
 
         const resData = { RemovedUserId: userId.userId, savedMessage}
 
-        for(const participantId of existingConversation.participantIds) {
+        for(const participantId of participantIdsBeforeRemoving) {
             if (participantId.participantId !== userID) {
                 const receiverSocketId = getReceiverSocketId(participantId.participantId);
                 if (receiverSocketId) {
