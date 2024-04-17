@@ -576,8 +576,9 @@ const chanceRoleOwnerService = async (userID, data) => {
     }
 }
 
-const leaveGroupService = async (data) => {
+const leaveGroupService = async (userID, data) => {
     const { conversationId, reqData } = data;
+    let savedMessages = []
    
     try{
         const existingConversation = await ConversationModel.get(conversationId);
@@ -601,7 +602,39 @@ const leaveGroupService = async (data) => {
             return participant.participantId !== reqData.userId;
         });
 
+        if(reqData.choseOwner){
+            const changeOwnerMessage = new MessageModel({
+                senderId: reqData.choseOwner,
+                conversationId: conversationId.conversationId,
+                content: "đã được chuyển quyền trưởng nhóm",
+                type: "notification"
+            })
+            const savedChangeOwnerMessage = await changeOwnerMessage.save()
+            savedMessages.push(savedChangeOwnerMessage)
+        }
+
+        const leaveMessage = new MessageModel({
+            senderId: reqData.userId,
+            conversationId: conversationId.conversationId,
+            content: "đã rời khỏi nhóm",
+            type: "notification"
+        })
+
+        const savedLeaveMessage = await leaveMessage.save()
+        savedMessages.push(savedLeaveMessage)
+
         await existingConversation.save(); 
+
+        const resData = {conversationId: existingConversation.conversationId, savedMessages, leftUserID: reqData.userId, updatedParticipantIds: existingConversation.participantIds}
+
+        for(const participantId of existingConversation.participantIds) {
+            if (participantId.participantId !== userID) {
+                const receiverSocketId = getReceiverSocketId(participantId.participantId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit('leaveConversation', resData);
+                }
+            }
+        }
       
         return {
             message: 'Đã rời nhóm thành công',
