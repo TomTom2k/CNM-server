@@ -32,7 +32,7 @@ const UserSchema = new Schema(
 		},
 		profilePic: {
 			type: String,
-			default: 't',
+			default: 'https://zalo-test18.s3.ap-southeast-1.amazonaws.com/user.png',
 		},
 		friends: {
 			type: Array,
