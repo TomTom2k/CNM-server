@@ -36,7 +36,7 @@ const signInWithPhoneNumber = async (req, res, next) => {
 
 const signUpWithPhoneNumber = async (req, res, next) => {
 	try {
-		const data = await createNewUser(req.body, req.file)
+		const data = await createNewUser(req.body)
 
 		res.status(data.status).json({
 			message: data.message,
