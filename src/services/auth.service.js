@@ -2,8 +2,6 @@ const JWT = require('jsonwebtoken');
 
 const UserModel = require('../models/user.model');
 
-const { s3 } = require("../configs/aws.config")
-
 require('dotenv').config();
 
 const encodedToken = (phoneNumber) => {
@@ -18,17 +16,7 @@ const encodedToken = (phoneNumber) => {
 	);
 };
 
-const multer = require('multer');
-
-const storage = multer.memoryStorage({
-	destination(req, file, callback) {
-		callback(null, "");
-	},
-});
-
-const bucketName = process.env.S3_BUCKET_NAME;
-
-const createNewUser = async (user, file) => {
+const createNewUser = async (user) => {
 	const { phoneNumber, password, gender, fullName, dateOfBirth } = user;
 
 	// Check if the phone number is already in use
@@ -43,21 +31,6 @@ const createNewUser = async (user, file) => {
 		};
 	}
 
-	const image = file?.originalname.split(".");//Lấy ra file ảnh từ form
-	const fileType = image[image.length - 1];
-	const filePath = `${Date.now().toString()}.${file.size}.${file?.originalname}`;//Đặt tên file ảnh theo id và name của course  
-
-	const paramsS3 = {
-		Bucket: bucketName,
-		Key: filePath,
-		Body: file.buffer,
-		ContentType: file.mimetype,
-	};
-
-	// Upload image to S3
-	const data = await s3.upload(paramsS3).promise();
-	const profilePic_url = data.Location;
-
 	// Create a new user without sending an OTP
 	const newUser = new UserModel({
 		phoneNumber: phoneNumber,
@@ -66,7 +39,6 @@ const createNewUser = async (user, file) => {
 		dateOfBirth: dateOfBirth,
 		gender: gender,
 		active: true,
-		profilePic: profilePic_url,
 	});
 
 	await newUser.save();
