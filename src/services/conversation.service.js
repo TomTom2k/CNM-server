@@ -107,10 +107,28 @@ const createConversationService = async (userID, data, avatar) => {
         );
     
         if (matchingConversations.length > 0) {
+            const existingConversationData = matchingConversations[0];
+
+            // Lấy thông tin về các thành viên trong cuộc trò chuyện đã tồn tại
+            const memberIds = existingConversationData.participantIds.map(participant => participant.participantId);
+            const members = await User.batchGet(memberIds, {
+                attributes: ['userID', 'fullName', 'profilePic'],
+            });
+
+            const membersMap = {};
+            members.forEach((member) => {
+                membersMap[member.userID] = member;
+            });
+
+            const membersInfo = existingConversationData.participantIds.map(participant => membersMap[participant.participantId]);
+
+            // Thêm thông tin thành viên vào dữ liệu cuộc trò chuyện đã tồn tại
+            existingConversationData.membersInfo = membersInfo;
+
             return {
                 message: 'Cuộc trò chuyện đã tồn tại',
                 status: 200,
-                data: matchingConversations[0],
+                data: existingConversationData,
             };
         }
     }
@@ -167,6 +185,22 @@ const createConversationService = async (userID, data, avatar) => {
         participantIds: conversationParticipants, // Thay đổi ở đây để truy cập vào trường participantId trong mỗi object
     });
     conversation = await conversation.save();
+
+    // Lấy thông tin của tất cả các thành viên và thêm vào cuộc trò chuyện
+    const memberIds = conversationParticipants.map(participant => participant.participantId);
+    const members = await User.batchGet(memberIds, {
+        attributes: ['userID', 'fullName', 'profilePic'],
+    });
+
+    const membersMap = {};
+    members.forEach((member) => {
+        membersMap[member.userID] = member;
+    });
+
+    const membersInfo = conversationParticipants.map(participant => membersMap[participant.participantId]);
+
+    // Thêm thông tin thành viên vào cuộc trò chuyện
+    conversation.membersInfo = membersInfo;
 
     for(const participantId of conversation.participantIds) {
         if (participantId.participantId !== userID) {
