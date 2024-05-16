@@ -13,7 +13,8 @@ const {
 	cancelAddFriends,
 	cancelRequestAddFriendsService,
 	deleteFriendService,
-	getAllFriendsWithConversationIdService
+	getAllFriendsWithConversationIdService,
+	findUsersByIdsService
 } = require("../services/user.service")
 
 // Contact
@@ -222,6 +223,19 @@ const getAllFriendsWithConversationId = async (req, res, next) => {
 	}
 };
 
+const findUsersByIds = async (req, res, next) => {
+	try {
+		const data = await findUsersByIdsService(req.query)
+
+		return res.status(data.status).json({
+			message: data.message,
+			users: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	addContactForUser,
 	getAllContactOfUser,
@@ -237,5 +251,6 @@ module.exports = {
 	cancelFriend,
 	cancelRequestAddFriends,
 	deleteFriend,
-	getAllFriendsWithConversationId
+	getAllFriendsWithConversationId,
+	findUsersByIds
 };

@@ -19,7 +19,8 @@ const {
 	cancelFriend,
 	cancelRequestAddFriends,
 	deleteFriend,
-	getAllFriendsWithConversationId
+	getAllFriendsWithConversationId,
+	findUsersByIds
 } = require('../controllers/user.controller');
 
 router.post(
@@ -101,6 +102,12 @@ router.get(
 	'/get-all-friends-with-conversationid',
 	passport.authenticate('jwt', { session: false }),
 	getAllFriendsWithConversationId
+);
+
+router.get(
+	'/find-users-by-ids',
+	passport.authenticate('jwt', { session: false }),
+	findUsersByIds
 );
 
 module.exports = router;

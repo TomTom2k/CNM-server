@@ -68,7 +68,7 @@ const findUserByPhoneNumberService = async (user, data) => {
     const users = await UserModel.scan('phoneNumber')
         .contains(phoneNumber.trim())
         .filter((user) => user.userID !== userID)
-        .attributes(['userID', 'phoneNumber', 'fullName', 'profilePic'])
+        .attributes(['userID', 'phoneNumber', 'fullName', 'profilePic', 'friends'])
         .exec();
 
     return {
@@ -492,6 +492,23 @@ const getAllFriendsWithConversationIdService = async (user) => {
     };
 }
 
+const findUsersByIdsService = async (data) => {
+    let { userIds } = data;
+    if (typeof userIds === 'string') {
+        userIds = [userIds];
+    }
+    
+    const users = await UserModel.batchGet(userIds, {
+        attributes: ['userID', 'phoneNumber', 'fullName', 'profilePic', 'friends']
+    })
+
+    return {
+        message: 'Tìm thành công',
+        status: 200,
+        data: users,
+    };
+}
+
 
 module.exports = {
     addContactForUserService,
@@ -508,5 +525,6 @@ module.exports = {
     cancelAddFriends,
     deleteFriendService,
     cancelRequestAddFriendsService,
-    getAllFriendsWithConversationIdService
+    getAllFriendsWithConversationIdService,
+    findUsersByIdsService
 }
