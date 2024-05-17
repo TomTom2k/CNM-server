@@ -260,11 +260,15 @@ const addFriendService = async (data) => {
             const updatedListRequestAddFriendsSent = listRequestAddFriendsSent.filter((id) => id !== userId);
             await UserModel.update({ userID: friendId }, { listRequestAddFriendsSent: updatedListRequestAddFriendsSent });
 
+            const receiverSocketId = getReceiverSocketId(friendId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('acceptAddFriend', userId);
+            }
 
             return {
                 message: 'Thêm bạn thành công',
                 status: 200,
-                data: friends, // Trả về danh sách bạn bè mới
+                data: friendId, // Trả về danh sách bạn bè mới
             };
         } else {
             return {
@@ -307,6 +311,11 @@ const requestAddFriendsSent = async (data) => {
         if (!listRequestAddFriendsReceived.includes(userId)) {
             listRequestAddFriendsReceived.push(userId);
             await UserModel.update({ userID: friendId }, { listRequestAddFriendsReceived });
+        }
+
+        const receiverSocketId = getReceiverSocketId(friendId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('addFriend', userId);
         }
 
         return {
@@ -356,10 +365,15 @@ const cancelAddFriends = async (data) => {
         const updatedListRequestAddFriendsReceived = listRequestAddFriendsReceived.filter((id) => id !== userId);
         await UserModel.update({ userID: friendId }, { listRequestAddFriendsReceived: updatedListRequestAddFriendsReceived });
 
+        const receiverSocketId = getReceiverSocketId(friendId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('cancelAddFriend', userId);
+        }
+
         return {
             message: 'Hủy lời mời kết bạn thành công',
             status: 200,
-            data: {},
+            data: friendId,
         };
     } catch (error) {
         console.error('Error canceling friend request:', error);
