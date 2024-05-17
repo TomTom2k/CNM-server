@@ -2,7 +2,7 @@ const { encodedToken, createNewUser } = require("../services/auth.service")
 
 const secret = async (req, res, next) => {
 	try {
-		const { userID, fullName, dateOfBirth, phoneNumber, gender, profilePic, listRequestAddFriendsSent } = req.user;
+		const { userID, fullName, dateOfBirth, phoneNumber, gender, profilePic, friends, listRequestAddFriendsSent, listRequestAddFriendsReceived } = req.user;
 		const user = {
 			userID,
 			fullName,
@@ -10,7 +10,9 @@ const secret = async (req, res, next) => {
 			phoneNumber,
 			gender,
 			profilePic,
-			listRequestAddFriendsSent
+			friends,
+			listRequestAddFriendsSent,
+			listRequestAddFriendsReceived
 		};
 
 		return res.status(200).json({
