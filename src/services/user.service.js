@@ -400,11 +400,16 @@ const cancelRequestAddFriendsService = async (data) =>{
         const listRequestAddFriendsSent = userRequested.listRequestAddFriendsSent || [];
         const updatedListRequestAddFriendsSent = listRequestAddFriendsSent.filter((id) => id !== userId);
         await UserModel.update({ userID: userRequestedId }, { listRequestAddFriendsSent: updatedListRequestAddFriendsSent });
+
+        const receiverSocketId = getReceiverSocketId(userRequestedId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('refuseAddFriend', userId);
+        }
       
         return {
             message: 'Từ chối lời mời yêu cầu kết bạn thành công',
             status: 200,
-            data: {},
+            data: userRequestedId,
         };
     } catch (error) {
         console.error('Error canceling friend request:', error);
