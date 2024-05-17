@@ -5,6 +5,7 @@ const UserModel = require('../models/user.model');
 const ContactModel = require('../models/contact.model');
 const ConversationModel = require('../models/conversation.model');
 const { s3 } = require("../configs/aws.config")
+const { io, getReceiverSocketId } = require('../socket/socket');
 
 
 const addContactForUserService = async (userId, data) => {
@@ -427,10 +428,15 @@ const deleteFriendService = async (data) => {
             const updatedFriendsOfFriend = friendsOfFriend.filter((id) => id !== userId);
             await UserModel.update({ userID: friendId }, { friends: updatedFriendsOfFriend });
 
+            const receiverSocketId = getReceiverSocketId(friendId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('deleteFriend', userId);
+            }
+
             return {
                 message: 'Xóa bạn thành công',
                 status: 200,
-                data: updatedFriends, // Trả về danh sách bạn bè mới
+                data: friendId, // Trả về danh sách bạn bè mới
             };
         } else {
             return {
