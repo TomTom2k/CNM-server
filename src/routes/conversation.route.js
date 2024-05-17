@@ -14,7 +14,8 @@ const {
 	removeUserIdInGroup,
 	deleteConversation,
 	chanceRoleOwner,
-	leaveGroup
+	leaveGroup,
+	getAllGroupConversationsOfUser
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -29,9 +30,9 @@ router.post(
 	createConversation
 );
 router.get(
-	'/:conversationId',
+	'/group-conversations',
 	passport.authenticate('jwt', { session: false }),
-	getLastMessage
+	getAllGroupConversationsOfUser
 );
 router.get(
 	'/recently/:quantity',
@@ -42,6 +43,11 @@ router.get(
 	'/recently-with-friend/:quantity',
 	passport.authenticate('jwt', { session: false }),
 	getRecentlyFriendConversations
+);
+router.get(
+	'/:conversationId',
+	passport.authenticate('jwt', { session: false }),
+	getLastMessage
 );
 router.post(
 	'/:conversationId/add-member',

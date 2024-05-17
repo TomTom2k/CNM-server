@@ -8,7 +8,8 @@ const {
 	removeUserIdInGroupService,
 	deleteConversationService,
 	chanceRoleOwnerService,
-	leaveGroupService
+	leaveGroupService,
+	getAllGroupConversationsOfUserService
 } = require("../services/conversation.service")
 
 
@@ -158,8 +159,20 @@ const leaveGroup = async (req, res, next) => {
 	} catch (error) {
 		next(error);
 	}
-
 }
+
+const getAllGroupConversationsOfUser = async (req, res, next) => {
+	try {
+		const data = await getAllGroupConversationsOfUserService(req.user.userID)
+
+		res.status(data.status).json({
+			message: data.message,
+			conversations: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
 
 module.exports = {
 	getConversations,
@@ -171,5 +184,6 @@ module.exports = {
 	removeUserIdInGroup,
 	deleteConversation,
 	chanceRoleOwner,
-	leaveGroup
+	leaveGroup,
+	getAllGroupConversationsOfUser
 };

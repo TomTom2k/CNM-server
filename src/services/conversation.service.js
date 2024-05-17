@@ -702,6 +702,20 @@ const leaveGroupService = async (userID, data) => {
     }
 }
 
+const getAllGroupConversationsOfUserService = async (userID) => {
+    const conversations = await getConversationsService(userID)
+
+    const groupConversations = conversations.data.filter(conversation => {
+        return conversation.participantIds.length > 2
+    })
+
+    return {
+		message: 'Lấy các conversation nhóm thành công',
+        data: groupConversations,
+        status: 200
+    };
+}
+
 module.exports = {
     getConversationsService,
     createConversationService,
@@ -712,5 +726,6 @@ module.exports = {
     removeUserIdInGroupService,
     deleteConversationService,
     chanceRoleOwnerService,
-    leaveGroupService
+    leaveGroupService,
+    getAllGroupConversationsOfUserService
 }
