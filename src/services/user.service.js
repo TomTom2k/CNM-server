@@ -260,11 +260,15 @@ const addFriendService = async (data) => {
             const updatedListRequestAddFriendsSent = listRequestAddFriendsSent.filter((id) => id !== userId);
             await UserModel.update({ userID: friendId }, { listRequestAddFriendsSent: updatedListRequestAddFriendsSent });
 
+            const receiverSocketId = getReceiverSocketId(friendId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('acceptAddFriend', userId);
+            }
 
             return {
                 message: 'Thêm bạn thành công',
                 status: 200,
-                data: friends, // Trả về danh sách bạn bè mới
+                data: friendId, // Trả về danh sách bạn bè mới
             };
         } else {
             return {

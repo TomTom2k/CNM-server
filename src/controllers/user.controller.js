@@ -112,7 +112,7 @@ const addFriend = async (req, res, next) => {
 
 		return res.status(data.status).json({
 			message: data.message,
-			updatedUser: data.data,
+			acceptedFriend: data.data,
 		});
 	} catch (error) {
 		next(error);
