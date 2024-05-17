@@ -186,7 +186,7 @@ const cancelRequestAddFriends = async (req, res, next) =>{
 
 		return res.status(data.status).json({
 			message: data.message,
-			updatedUser: data.data,
+			refusedFriend: data.data,
 		})
 	} catch (error) {
 		next(error)
