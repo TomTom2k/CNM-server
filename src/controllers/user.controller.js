@@ -203,7 +203,7 @@ const deleteFriend = async (req, res, next) => {
 	
 		return res.status(data.status).json({
 			message: data.message,
-			updatedUser: data.data,
+			deletedUser: data.data,
 		});
 	} catch (error) {
 		next(error);
