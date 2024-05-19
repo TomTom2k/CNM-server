@@ -6,6 +6,7 @@ const ContactModel = require('../models/contact.model');
 const ConversationModel = require('../models/conversation.model');
 const { s3 } = require("../configs/aws.config")
 const { io, getReceiverSocketId } = require('../socket/socket');
+const MessageModel = require('../models/message.model');
 
 
 const addContactForUserService = async (userId, data) => {
@@ -260,15 +261,83 @@ const addFriendService = async (data) => {
             const updatedListRequestAddFriendsSent = listRequestAddFriendsSent.filter((id) => id !== userId);
             await UserModel.update({ userID: friendId }, { listRequestAddFriendsSent: updatedListRequestAddFriendsSent });
 
+            // Kiểm tra xem có tồn tại cuộc trò chuyện nào giữa 2 user không
+            const existingConversation = await ConversationModel.scan().exec();
+            const matchingConversations = existingConversation.filter(
+                (conversation) => {
+                    const participantIds = conversation.participantIds.map(participant => participant.participantId);
+                    return participantIds.includes(userId) && participantIds.includes(friendId);
+                }
+            );
+
+            let conversation;
+            let membersInfo;
+
+            if (matchingConversations.length > 0) {
+                // Cuộc trò chuyện đã tồn tại
+                conversation = matchingConversations[0];
+
+                // Lấy thông tin về các thành viên trong cuộc trò chuyện đã tồn tại
+                const memberIds = conversation.participantIds.map(participant => participant.participantId);
+                const members = await UserModel.batchGet(memberIds, {
+                    attributes: ['userID', 'fullName', 'profilePic'],
+                });
+
+                const membersMap = {};
+                members.forEach((member) => {
+                    membersMap[member.userID] = member;
+                });
+
+                membersInfo = conversation.participantIds.map(participant => membersMap[participant.participantId]);
+                conversation.membersInfo = membersInfo;
+            } else {
+                // Tạo cuộc trò chuyện mới
+                const conversationParticipants = [
+                    { participantId: userId, role: 'member' },
+                    { participantId: friendId, role: 'member' }
+                ];
+
+                conversation = new ConversationModel({
+                    avatar: '',
+                    name: '',
+                    participantIds: conversationParticipants
+                });
+                conversation = await conversation.save();
+
+                // Lấy thông tin của tất cả các thành viên và thêm vào cuộc trò chuyện
+                const memberIds = conversationParticipants.map(participant => participant.participantId);
+                const members = await UserModel.batchGet(memberIds, {
+                    attributes: ['userID', 'fullName', 'profilePic'],
+                });
+
+                const membersMap = {};
+                members.forEach((member) => {
+                    membersMap[member.userID] = member;
+                });
+
+                membersInfo = conversationParticipants.map(participant => membersMap[participant.participantId]);
+                conversation.membersInfo = membersInfo;
+            }
+
+            const message = new MessageModel({
+                senderId: userId,
+                conversationId: conversation.conversationId,
+                content: "đã đồng ý lời mời kết bạn",
+                type: "notification"
+            })
+    
+            const savedMessage = await message.save()
+
             const receiverSocketId = getReceiverSocketId(friendId);
             if (receiverSocketId) {
+                io.to(receiverSocketId).emit('updateConversationAfterAcceptingAddFriend', {conversation, savedMessage});
                 io.to(receiverSocketId).emit('acceptAddFriend', userId);
             }
 
             return {
                 message: 'Thêm bạn thành công',
                 status: 200,
-                data: friendId, // Trả về danh sách bạn bè mới
+                data: {acceptedFriend: friendId, conversation},
             };
         } else {
             return {
