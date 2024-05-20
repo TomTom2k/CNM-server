@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: vincent181102/zalo-app-backend:v1.0
     restart: unless-stopped
     ports:
       - 5000:5000
