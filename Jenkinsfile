@@ -6,6 +6,13 @@ pipeline {
         IMAGE_TAG = 'v1.0'
     }
     stages {
+        stage('Prepare Environment') {
+            steps {
+                withCredentials([file(credentialsId: 'env-server-file', variable: 'ENV_FILE')]) {
+                    sh 'cp $ENV_FILE .env'
+                }
+            }
+        }
         stage('Build') {
             steps {
                 withDockerRegistry(credentialsId: 'dockerhub', url: 'https://index.docker.io/v1/') {
