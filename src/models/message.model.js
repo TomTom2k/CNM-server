@@ -25,6 +25,11 @@ const MessageSchema = new Schema(
 			schema: [String],
 			default: [],
 		},
+		seenUserIds: {
+			type: Array,
+			schema: [String],
+			default: [],
+		}
 	},
 	{
 		timestamps: true,

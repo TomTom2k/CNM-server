@@ -15,7 +15,8 @@ const {
 	deleteConversation,
 	chanceRoleOwner,
 	leaveGroup,
-	getAllGroupConversationsOfUser
+	getAllGroupConversationsOfUser,
+	getUnseenMessagesQuantity
 } = require('../controllers/conversation.controller');
 
 router.get(
@@ -45,7 +46,7 @@ router.get(
 	getRecentlyFriendConversations
 );
 router.get(
-	'/:conversationId',
+	'/:conversationId/last-message',
 	passport.authenticate('jwt', { session: false }),
 	getLastMessage
 );
@@ -73,6 +74,11 @@ router.post(
 	'/:conversationId/leave-group',
 	passport.authenticate('jwt', { session: false }),
 	leaveGroup
+);
+router.get(
+	'/:conversationId/unseen-message-quantity',
+	passport.authenticate('jwt', { session: false }),
+	getUnseenMessagesQuantity
 );
 
 module.exports = router;

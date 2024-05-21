@@ -9,7 +9,8 @@ const {
 	deleteConversationService,
 	chanceRoleOwnerService,
 	leaveGroupService,
-	getAllGroupConversationsOfUserService
+	getAllGroupConversationsOfUserService,
+	getUnseenMessagesQuantityService
 } = require("../services/conversation.service")
 
 
@@ -174,6 +175,19 @@ const getAllGroupConversationsOfUser = async (req, res, next) => {
 	}
 };
 
+const getUnseenMessagesQuantity = async (req, res, next) => {
+	try {
+		const data = await getUnseenMessagesQuantityService(req.user.userID, req.params)
+
+		res.status(data.status).json({
+			message: data.message,
+			unseenMessagesQuantity: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	getConversations,
 	createConversation,
@@ -185,5 +199,6 @@ module.exports = {
 	deleteConversation,
 	chanceRoleOwner,
 	leaveGroup,
-	getAllGroupConversationsOfUser
+	getAllGroupConversationsOfUser,
+	getUnseenMessagesQuantity
 };

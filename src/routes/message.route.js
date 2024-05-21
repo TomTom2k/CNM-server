@@ -9,7 +9,8 @@ const {
 	getMessages,
 	recallMessage,
 	deleteMessageForMeOnly,
-	shareMessage
+	shareMessage,
+	updateSeenUsersOfMessages
 } = require('../controllers/message.controller');
 
 router.post(
@@ -37,6 +38,11 @@ router.post(
 	'/share-message',
 	passport.authenticate('jwt', { session: false }),
 	shareMessage
+);
+router.patch(
+	'/update-seen-user',
+	passport.authenticate('jwt', { session: false }),
+	updateSeenUsersOfMessages
 );
 
 module.exports = router;
