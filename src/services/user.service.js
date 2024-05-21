@@ -323,6 +323,7 @@ const addFriendService = async (data) => {
                 senderId: userId,
                 conversationId: conversation.conversationId,
                 content: "đã đồng ý lời mời kết bạn",
+                seenUserIds : [userId],
                 type: "notification"
             })
     

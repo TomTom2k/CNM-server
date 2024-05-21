@@ -40,6 +40,7 @@ const sendMessageService = async (senderId, data, files) => {
                     senderId: senderId,
                     conversationId: conversation.conversationId,
                     content: data.Location,
+                    seenUserIds : [senderId],
                     type
                 }))
             } else {
@@ -54,6 +55,7 @@ const sendMessageService = async (senderId, data, files) => {
             senderId: senderId,
             conversationId: conversation.conversationId,
             content: content || fileURL.trim(),
+            seenUserIds : [senderId],
             type
         }))
     }
@@ -205,6 +207,7 @@ const shareMessageService = async (userId, data) => {
             senderId: userId,
             conversationId: conversation.conversationId,
             content: messageContent,
+            seenUserIds : [userId],
             type: messageType
         })
 
@@ -234,10 +237,34 @@ const shareMessageService = async (userId, data) => {
     };
 }
 
+const updateSeenUsersOfMessagesService = async (userId, messageIds) => {
+    const messages = await MessageModel.batchGet(messageIds);
+
+    // Update seenUserIds for each message
+    const updatedMessages = messages.map(message => {
+        if (!message.seenUserIds) {
+            message.seenUserIds = [userId];
+        } else if (!message.seenUserIds.includes(userId)) {
+            message.seenUserIds.push(userId);
+        }
+        return message;
+    });
+
+    // Save updated messages back to DynamoDB
+    await Promise.all(updatedMessages.map(message => message.save()));
+
+    return {
+        message: "Cập nhật các tin nhắn thành công",
+        status: 200,
+        data: {}
+    };
+}
+
 module.exports = {
     sendMessageService,
     getMessagesService,
     recallMessageService,
     deleteMessageForMeOnlyService,
-    shareMessageService
+    shareMessageService,
+    updateSeenUsersOfMessagesService
 }

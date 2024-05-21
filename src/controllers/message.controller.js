@@ -3,7 +3,8 @@ const {
 	getMessagesService, 
 	recallMessageService,
 	deleteMessageForMeOnlyService,
-	shareMessageService
+	shareMessageService,
+	updateSeenUsersOfMessagesService
 } = require("../services/message.service")
 
 const sendMessage = async (req, res, next) => {
@@ -59,10 +60,24 @@ const shareMessage = async (req, res, next) => {
 	}
 };
 
+const updateSeenUsersOfMessages = async (req, res, next) => {
+	try {
+		const data = await updateSeenUsersOfMessagesService(req.user.userID, req.body.messageIds)
+
+		return res.status(data.status).json({
+			message: data.message,
+			data: data.data,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 module.exports = {
 	sendMessage,
 	getMessages,
 	recallMessage,
 	deleteMessageForMeOnly,
-	shareMessage
+	shareMessage,
+	updateSeenUsersOfMessages
 };

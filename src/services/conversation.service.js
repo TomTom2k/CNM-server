@@ -61,7 +61,8 @@ const getConversationsService = async (senderId) => {
     
         for(const conversationsWithMember of conversationsWithMembers){
             const lastMessage = await getLastMessageService(senderId, {conversationId: conversationsWithMember.conversationId})
-            resConversations.push({...conversationsWithMember, lastMessage: lastMessage.data})
+            const unseenMessagesQuantity = await getUnseenMessagesQuantityService(senderId, {conversationId: conversationsWithMember.conversationId})
+            resConversations.push({...conversationsWithMember, lastMessage: lastMessage.data, unseenMessagesQuantity: unseenMessagesQuantity.data})
         }
     
         resConversations.sort((a, b) => {
@@ -351,6 +352,7 @@ const addMemberIntoGroupService = async (userID, data) => {
                     senderId: userId,
                     conversationId: conversationId.conversationId,
                     content: "đã được thêm vào nhóm",
+                    seenUserIds : [userID],
                     type: "notification"
                 }))
             }
@@ -420,6 +422,7 @@ const removeUserIdInGroupService = async (userID, data) => {
             senderId: userId.userId,
             conversationId: conversationId.conversationId,
             content: "đã được xóa khỏi nhóm",
+            seenUserIds : [userID],
             type: "notification"
         })
 
@@ -557,6 +560,7 @@ const chanceRoleOwnerService = async (userID, data) => {
             senderId: userId.userId,
             conversationId: conversationId.conversationId,
             content: "đã được chuyển quyền trưởng nhóm",
+            seenUserIds : [userID],
             type: "notification"
         })
 
@@ -641,6 +645,7 @@ const leaveGroupService = async (userID, data) => {
                 senderId: reqData.choseOwner,
                 conversationId: conversationId.conversationId,
                 content: "đã được chuyển quyền trưởng nhóm",
+                seenUserIds : [userID],
                 type: "notification"
             })
             const savedChangeOwnerMessage = await changeOwnerMessage.save()
@@ -651,6 +656,7 @@ const leaveGroupService = async (userID, data) => {
             senderId: reqData.userId,
             conversationId: conversationId.conversationId,
             content: "đã rời khỏi nhóm",
+            seenUserIds : [userID],
             type: "notification"
         })
 
@@ -716,6 +722,34 @@ const getAllGroupConversationsOfUserService = async (userID) => {
     };
 }
 
+const getUnseenMessagesQuantityService = async (userID, data) => {
+    const { conversationId } = data;
+
+	// Lấy danh sách tin nhắn của cuộc trò chuyện
+	const messages = await MessageModel.query('conversationId')
+        .eq(conversationId)
+        .exec();
+
+    if(messages && messages.length > 0){
+        const filterMessages = messages.filter(message => {
+            return !message.seenUserIds?.includes(userID)
+        })
+    
+    
+        return {
+            message: 'Lấy số lượng tin nhắn chưa xem thành công',
+            data: filterMessages.length,
+            status: 200
+        };
+    }
+
+    return {
+        message: 'Cuộc trò chuyện chưa có tin nhắn',
+        data: 0,
+        status: 200
+    };
+}
+
 module.exports = {
     getConversationsService,
     createConversationService,
@@ -727,5 +761,6 @@ module.exports = {
     deleteConversationService,
     chanceRoleOwnerService,
     leaveGroupService,
-    getAllGroupConversationsOfUserService
+    getAllGroupConversationsOfUserService,
+    getUnseenMessagesQuantityService
 }
