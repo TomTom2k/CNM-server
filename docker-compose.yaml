@@ -3,4 +3,4 @@ services:
     image: vincent181102/zalo-app-backend:v1.0
     restart: unless-stopped
     ports:
-      - 5001:5001
+      - 80:5001
